@@ -1,21 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0f1117;
-  --color-card: #161922;
-  --color-surface: #1e2330;
-  --color-text: #e2e8f0;
-  --color-muted: #94a3b8;
-  --color-accent: #38bdf8;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-border: #334155;
-  --color-input-bg: #0f1117;
-  --color-shadow: rgba(0, 0, 0, 0.3);
-  --color-pre-bg: #0a0c11;
-  --color-banner-error-bg: rgba(239, 68, 68, 0.12);
-  --color-banner-error-text: #fecaca;
+  /* Ghostty Dark Pastel — adapted for web dashboard */
+  --color-bg: #0c0c14;
+  --color-card: #141420;
+  --color-surface: #1c1c2e;
+  --color-text: #e8e8f0;
+  --color-muted: #8888a0;
+  --color-accent: #55ffff;
+  --color-danger: #ff5555;
+  --color-success: #55ff55;
+  --color-warning: #ffff55;
+  --color-border: #2a2a40;
+  --color-input-bg: #0c0c14;
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-pre-bg: #080810;
+  --color-banner-error-bg: rgba(255, 85, 85, 0.12);
+  --color-banner-error-text: #ffb0b0;
 }
 
 [data-theme="light"] {
@@ -24,7 +25,7 @@
   --color-surface: #f1f5f9;
   --color-text: #0f172a;
   --color-muted: #64748b;
-  --color-accent: #0284c7;
+  --color-accent: #0ea5e9;
   --color-danger: #dc2626;
   --color-success: #16a34a;
   --color-warning: #d97706;
@@ -43,7 +44,7 @@
     --color-surface: #f1f5f9;
     --color-text: #0f172a;
     --color-muted: #64748b;
-    --color-accent: #0284c7;
+    --color-accent: #0ea5e9;
     --color-danger: #dc2626;
     --color-success: #16a34a;
     --color-warning: #d97706;

@@ -1,5 +1,5 @@
 import { getIdToken } from "./firebase";
-import type { LibraryListResponse } from "@/types";
+import type { LibraryListResponse, LibraryEntry } from "@/types";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://macmini.local:8000";
 
@@ -45,29 +45,86 @@ export async function sendCommand(text: string): Promise<{ status: string; reply
   return res.json();
 }
 
-export async function fetchLibraryEntries(params?: {
+// ---------------------------------------------------------------------------
+// Library API
+// ---------------------------------------------------------------------------
+
+export interface LibraryFilters {
+  q?: string;
   section?: string;
   tag?: string;
-  search?: string;
+  status?: string;
   source_url?: string;
   page?: number;
   per_page?: number;
-}): Promise<LibraryListResponse> {
-  const qs = new URLSearchParams();
-  if (params?.section) qs.set("section", params.section);
-  if (params?.tag) qs.set("tag", params.tag);
-  if (params?.search) qs.set("search", params.search);
-  if (params?.source_url) qs.set("source_url", params.source_url);
-  qs.set("page", String(params?.page ?? 1));
-  qs.set("per_page", String(params?.per_page ?? 20));
-  return apiGet<LibraryListResponse>(`/api/v1/library/entries?${qs.toString()}`);
+}
+
+export async function fetchLibraryEntries(
+  opts: LibraryFilters = {}
+): Promise<LibraryListResponse> {
+  const params = new URLSearchParams();
+  if (opts.q) params.set("q", opts.q);
+  if (opts.section) params.set("section", opts.section);
+  if (opts.tag) params.set("tag", opts.tag);
+  if (opts.status) params.set("status", opts.status);
+  if (opts.source_url) params.set("source_url", opts.source_url);
+  if (opts.page !== undefined) params.set("page", String(opts.page));
+  if (opts.per_page !== undefined) params.set("per_page", String(opts.per_page));
+  const query = params.toString();
+  return apiGet<LibraryListResponse>(`/api/v1/library/entries${query ? `?${query}` : ""}`);
+}
+
+export async function fetchLibraryEntry(id: string): Promise<LibraryEntry> {
+  return apiGet<LibraryEntry>(`/api/v1/library/entries/${encodeURIComponent(id)}`);
+}
+
+export async function fetchLibrarySections(): Promise<string[]> {
+  const data = await apiGet<{ sections: string[] }>("/api/v1/library/sections");
+  return data.sections;
+}
+
+export async function fetchLibraryTags(): Promise<string[]> {
+  const data = await apiGet<{ tags: string[] }>("/api/v1/library/tags");
+  return data.tags;
+}
+
+export interface LinkPreview {
+  title: string;
+  description: string;
+  author: string;
+  platform: string;
+  source_url: string;
+  extra: Record<string, unknown>;
+}
+
+export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
+  // Backend enriches URLs via the article command flow.
+  // We send an article command and parse the enriched reply.
+  const res = await sendCommand(`article: ${url}`);
+  // Fallback: if reply contains metadata JSON, parse it; otherwise return basic shape
+  try {
+    const parsed = JSON.parse(res.reply ?? "{}") as Partial<LinkPreview>;
+    return {
+      title: parsed.title ?? url,
+      description: parsed.description ?? "",
+      author: parsed.author ?? "",
+      platform: parsed.platform ?? "generic",
+      source_url: parsed.source_url ?? url,
+      extra: parsed.extra ?? {},
+    };
+  } catch {
+    return {
+      title: url,
+      description: res.reply ?? "",
+      author: "",
+      platform: "generic",
+      source_url: url,
+      extra: {},
+    };
+  }
 }
 
 export async function checkDuplicateUrl(url: string): Promise<boolean> {
-  try {
-    const data = await fetchLibraryEntries({ source_url: url, per_page: 1 });
-    return data.entries.length > 0;
-  } catch {
-    return false;
-  }
+  const data = await fetchLibraryEntries({ source_url: url, per_page: 1 });
+  return data.total > 0;
 }

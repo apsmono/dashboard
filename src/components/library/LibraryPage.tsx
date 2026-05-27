@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   BookOpen,
   ExternalLink,
@@ -17,9 +17,13 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { fetchLibraryEntries } from "@/lib/api";
+import {
+  useLibraryEntries,
+  useLibrarySections,
+} from "@/hooks/useApi";
 import type { LibraryEntry } from "@/types";
 import { LinkCaptureModal } from "./LinkCaptureModal";
+import { EntryDetailModal } from "./EntryDetailModal";
 
 function platformIcon(source_url?: string) {
   if (!source_url) return null;
@@ -33,59 +37,35 @@ function platformIcon(source_url?: string) {
 }
 
 export function LibraryPage() {
-  const [entries, setEntries] = useState<LibraryEntry[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
-  const [sections, setSections] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
 
-  const loadEntries = async (p = page) => {
-    setLoading(true);
-    try {
-      const data = await fetchLibraryEntries({
-        section: section || undefined,
-        search: search || undefined,
-        page: p,
-        per_page: perPage,
-      });
-      setEntries(data.entries);
-      setTotal(data.total);
-    } catch (err) {
-      console.error("Failed to load library entries:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, loading, refetch } = useLibraryEntries({
+    q: search || undefined,
+    section: section || undefined,
+    page,
+    per_page: perPage,
+  });
 
-  const loadSections = async () => {
-    try {
-      const data = await fetch("/api/v1/library/sections", {
-        headers: { "Content-Type": "application/json" },
-      }).then((r) => r.json());
-      setSections(data.sections || []);
-    } catch (err) {
-      console.error("Failed to load sections:", err);
-    }
-  };
+  const { sections } = useLibrarySections();
 
-  useEffect(() => {
-    loadEntries(1);
-    loadSections();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => loadEntries(1), 300);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
-
+  const entries = data?.entries ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / perPage) || 1;
+
+  const handleRefetch = useCallback(() => {
+    setPage(1);
+    refetch();
+  }, [refetch]);
+
+  // Reset to page 1 when search or section changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, section]);
 
   return (
     <div className="space-y-4">
@@ -199,11 +179,7 @@ export function LibraryPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const p = Math.max(1, page - 1);
-              setPage(p);
-              loadEntries(p);
-            }}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || loading}
           >
             <ChevronLeft size={14} />
@@ -214,11 +190,7 @@ export function LibraryPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const p = Math.min(totalPages, page + 1);
-              setPage(p);
-              loadEntries(p);
-            }}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || loading}
           >
             <ChevronRight size={14} />
@@ -226,74 +198,15 @@ export function LibraryPage() {
         </div>
       )}
 
-      {/* Entry detail modal */}
-      {selectedEntry && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setSelectedEntry(null)}
-        >
-          <div
-            className="w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold">{selectedEntry.title}</h2>
-              <button
-                onClick={() => setSelectedEntry(null)}
-                className="shrink-0 rounded-lg p-1 text-muted hover:text-text hover:bg-surface transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {platformIcon(selectedEntry.source_url)}
-              <Badge>{selectedEntry.section}</Badge>
-              <Badge variant="accent">{selectedEntry.status}</Badge>
-              <Badge variant="success">{selectedEntry.type}</Badge>
-            </div>
-
-            {selectedEntry.source_url && (
-              <a
-                href={selectedEntry.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mb-4 inline-flex items-center gap-1 text-sm text-accent hover:underline"
-              >
-                <ExternalLink size={14} />
-                {selectedEntry.source_url}
-              </a>
-            )}
-
-            {selectedEntry.tags.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-1">
-                {selectedEntry.tags.map((t) => (
-                  <Badge key={t} variant="default">
-                    {t}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            <div className="text-xs text-muted mb-2">
-              Captured: {selectedEntry.captured_at} · Path: {selectedEntry.path}
-            </div>
-
-            {selectedEntry.markdown && (
-              <div className="mt-4 rounded-lg border border-border bg-surface p-4">
-                <pre className="whitespace-pre-wrap text-sm text-text font-mono">
-                  {selectedEntry.markdown}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <EntryDetailModal
+        entry={selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+      />
 
       <LinkCaptureModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSaved={() => loadEntries(1)}
+        onSaved={handleRefetch}
       />
     </div>
   );

@@ -72,3 +72,13 @@ export interface LibraryListResponse {
   page: number;
   per_page: number;
 }
+
+export interface LibraryFilters {
+  q?: string;
+  section?: string;
+  tag?: string;
+  status?: string;
+  source_url?: string;
+  page?: number;
+  per_page?: number;
+}
