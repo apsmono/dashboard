@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/Badge";
 import {
   useLibraryEntries,
   useLibrarySections,
+  useLibraryTags,
 } from "@/hooks/useApi";
 import type { LibraryEntry } from "@/types";
 import { LinkCaptureModal } from "./LinkCaptureModal";
@@ -42,17 +43,20 @@ export function LibraryPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
+  const [tag, setTag] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
 
   const { data, loading, refetch } = useLibraryEntries({
     search: search || undefined,
     section: section || undefined,
+    tag: tag || undefined,
     page,
     per_page: perPage,
   });
 
   const { sections } = useLibrarySections();
+  const { tags: allTags } = useLibraryTags();
 
   const entries = data?.entries ?? [];
   const total = data?.total ?? 0;
@@ -69,10 +73,10 @@ export function LibraryPage() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  // Reset to page 1 when debounced search or section changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, section]);
+  }, [search, section, tag]);
 
   return (
     <div className="space-y-4">
@@ -119,6 +123,31 @@ export function LibraryPage() {
           </button>
         ))}
       </div>
+
+      {/* Tag filter */}
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={() => setTag("")}
+            className={`rounded-md px-2 py-0.5 text-xs transition-colors ${
+              tag === "" ? "bg-accent text-white" : "bg-surface text-muted hover:text-text"
+            }`}
+          >
+            Any tag
+          </button>
+          {allTags.slice(0, 20).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTag(t)}
+              className={`rounded-md px-2 py-0.5 text-xs transition-colors ${
+                tag === t ? "bg-accent text-white" : "bg-surface text-muted hover:text-text"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Entries grid */}
       {loading ? (

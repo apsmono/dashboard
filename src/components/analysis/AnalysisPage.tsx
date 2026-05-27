@@ -13,6 +13,7 @@ export function AnalysisPage() {
   const { data: activityData, loading: activityLoading } = useActivityAnalysis();
   const [query, setQuery] = useState("");
   const [synthesis, setSynthesis] = useState<string | null>(null);
+  const [synthSources, setSynthSources] = useState<string[]>([]);
   const [synthLoading, setSynthLoading] = useState(false);
 
   const handleSynthesize = async () => {
@@ -21,8 +22,10 @@ export function AnalysisPage() {
     try {
       const res = await synthesizeAnalysis(query.trim());
       setSynthesis(res.synthesis || res.reply || "No synthesis returned.");
+      setSynthSources(res.sources ?? []);
     } catch (e) {
       setSynthesis("Synthesis failed.");
+      setSynthSources([]);
     } finally {
       setSynthLoading(false);
     }
@@ -168,6 +171,18 @@ export function AnalysisPage() {
         {synthesis && (
           <div className="mt-3 rounded-lg border border-border bg-surface p-3 text-sm text-text whitespace-pre-wrap">
             {synthesis}
+          </div>
+        )}
+        {synthSources.length > 0 && (
+          <div className="mt-2">
+            <div className="mb-1 text-xs font-medium text-muted">Sources</div>
+            <div className="flex flex-wrap gap-1">
+              {synthSources.map((s) => (
+                <Badge key={s} variant="default">
+                  {s}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
       </Card>
