@@ -6,8 +6,11 @@ import { Overview } from "./Overview";
 import { Commands } from "./Commands";
 import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
-import { Placeholder } from "./Placeholder";
 import { LibraryPage } from "@/components/library/LibraryPage";
+import { GraphPage } from "@/components/graph/GraphPage";
+import { TimelinePage } from "@/components/timeline/TimelinePage";
+import { AnalysisPage } from "@/components/analysis/AnalysisPage";
+import { PlanningPage } from "@/components/planning/PlanningPage";
 import { LogOut } from "lucide-react";
 
 export function DashboardPage() {
@@ -53,10 +56,10 @@ export function DashboardPage() {
 
         {activeTab === "overview" && <Overview />}
         {activeTab === "library" && <LibraryPage />}
-        {activeTab === "graph" && <Placeholder title="Knowledge Graph" phase="Coming in Phase 3" />}
-        {activeTab === "timeline" && <Placeholder title="Timeline" phase="Coming in Phase 4" />}
-        {activeTab === "analysis" && <Placeholder title="Analysis" phase="Coming in Phase 5" />}
-        {activeTab === "planning" && <Placeholder title="Planning" phase="Coming in Phase 6" />}
+        {activeTab === "graph" && <GraphPage />}
+        {activeTab === "timeline" && <TimelinePage />}
+        {activeTab === "analysis" && <AnalysisPage />}
+        {activeTab === "planning" && <PlanningPage />}
         {activeTab === "commands" && <Commands />}
         {activeTab === "reminders" && <Reminders />}
         {activeTab === "cmd" && <CommandInput />}

@@ -10,6 +10,14 @@ import {
   fetchLinkPreview,
   checkDuplicateUrl,
   sendCommand,
+  fetchGraphData,
+  fetchTimeline,
+  fetchTagsAnalysis,
+  fetchGapsAnalysis,
+  fetchActivityAnalysis,
+  fetchGoals,
+  fetchProjects,
+  fetchFocusSuggestions,
 } from "@/lib/api";
 import type {
   DashboardStats,
@@ -297,4 +305,196 @@ export function useSaveLink() {
   }, []);
 
   return { save, saving, error };
+}
+
+// ---------------------------------------------------------------------------
+// Graph
+// ---------------------------------------------------------------------------
+
+export function useGraphData(maxNodes?: number) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchGraphData>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchGraphData(maxNodes);
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [maxNodes]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+// ---------------------------------------------------------------------------
+// Timeline
+// ---------------------------------------------------------------------------
+
+export function useTimeline(filters?: { section?: string; from_date?: string; to_date?: string }) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchTimeline>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchTimeline(filters);
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.section, filters?.from_date, filters?.to_date]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+// ---------------------------------------------------------------------------
+// Analysis
+// ---------------------------------------------------------------------------
+
+export function useTagsAnalysis() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchTagsAnalysis>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchTagsAnalysis();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+export function useGapsAnalysis() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchGapsAnalysis>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchGapsAnalysis();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+export function useActivityAnalysis() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchActivityAnalysis>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchActivityAnalysis();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+// ---------------------------------------------------------------------------
+// Planning
+// ---------------------------------------------------------------------------
+
+export function useGoals() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchGoals>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchGoals();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+export function useProjects() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchProjects>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchProjects();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
+}
+
+export function useFocusSuggestions() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchFocusSuggestions>> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchFocusSuggestions();
+      setData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
 }
