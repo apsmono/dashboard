@@ -14,8 +14,8 @@ React + TypeScript portfolio and authenticated command center.
 ## Development
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Open `http://localhost:5173/dashboard/`
@@ -23,7 +23,7 @@ Open `http://localhost:5173/dashboard/`
 ## Build
 
 ```bash
-npm run build
+bun run build
 ```
 
 Output goes to `dist/`.

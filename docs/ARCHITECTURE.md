@@ -63,6 +63,6 @@ Dashboard components → useApi hooks → api.ts → FastAPI backend
 ## Deploy Pipeline
 
 1. Push to `main`
-2. GitHub Actions runs `npm ci && npm run build`
+2. GitHub Actions runs `bun install --frozen-lockfile && bun run build`
 3. `VITE_FIREBASE_API_KEY` and `VITE_API_BASE` injected from secrets
 4. Static files uploaded to GitHub Pages
