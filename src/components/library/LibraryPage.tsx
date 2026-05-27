@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   BookOpen,
   ExternalLink,
@@ -46,6 +46,7 @@ export function LibraryPage() {
   const [tag, setTag] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data, loading, refetch } = useLibraryEntries({
     search: search || undefined,
@@ -73,6 +74,13 @@ export function LibraryPage() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
+  // Listen for keyboard shortcut to focus search
+  useEffect(() => {
+    const handler = () => searchInputRef.current?.focus();
+    window.addEventListener("focus-library-search", handler);
+    return () => window.removeEventListener("focus-library-search", handler);
+  }, []);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
@@ -85,8 +93,9 @@ export function LibraryPage() {
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <Input
+            ref={searchInputRef}
             className="pl-9"
-            placeholder="Search library..."
+            placeholder="Search library... (press / to focus)"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
