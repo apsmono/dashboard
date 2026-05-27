@@ -72,10 +72,37 @@
 
       <!-- Library -->
       <div id="view-library" class="hidden">
-        <div class="placeholder">
-          <div class="placeholder-icon">📚</div>
-          <h3>Library Browser</h3>
-          <p class="muted">Browse, search, and filter all knowledge entries.<br>Coming in Phase 2.</p>
+        <p id="library-error" class="banner-error hidden" role="alert"></p>
+        <div class="card" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="lib-search" placeholder="Search entries..." style="flex:1;min-width:180px;" />
+          <select id="lib-section">
+            <option value="">All sections</option>
+          </select>
+          <select id="lib-status">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="unknown">Unknown</option>
+          </select>
+          <button id="lib-filter-btn">Filter</button>
+        </div>
+        <div id="lib-grid" class="lib-grid"></div>
+        <div id="lib-empty" class="placeholder hidden">
+          <div class="placeholder-icon">📭</div>
+          <p class="muted">No entries found.</p>
+        </div>
+        <div id="lib-more-wrap" class="hidden" style="text-align:center;margin-top:1rem;">
+          <button id="lib-more-btn" class="btn-ghost">Load more</button>
+        </div>
+      </div>
+
+      <!-- Entry Modal -->
+      <div id="entry-modal" class="hidden" style="position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);padding:1rem;">
+        <div class="card" style="max-width:720px;width:100%;max-height:85vh;overflow:auto;position:relative;">
+          <button id="entry-modal-close" style="position:absolute;top:0.75rem;right:0.75rem;background:transparent;color:var(--muted);border:none;font-size:1.2rem;">✕</button>
+          <h2 id="entry-modal-title"></h2>
+          <div id="entry-modal-meta" style="margin-bottom:1rem;color:var(--muted);font-size:0.85rem;"></div>
+          <div id="entry-modal-body" class="markdown-body"></div>
         </div>
       </div>
 
@@ -159,6 +186,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

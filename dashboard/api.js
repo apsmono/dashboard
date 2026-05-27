@@ -36,7 +36,7 @@ export async function apiDelete(path) {
 export async function sendCommand(text) {
   const res = await fetch(`${API_BASE}/command`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await _headers(),
     body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error(await res.text());

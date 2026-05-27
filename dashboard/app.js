@@ -76,6 +76,7 @@ nav.addEventListener("click", (e) => {
     e.preventDefault();
     showView(e.target.dataset.view);
     if (e.target.dataset.view === "overview") loadOverview();
+    if (e.target.dataset.view === "library") { loadLibrarySections(); loadLibrary(false); }
     if (e.target.dataset.view === "commands") loadCommands();
     if (e.target.dataset.view === "reminders") loadReminders();
   }
@@ -250,6 +251,157 @@ document.getElementById("reminder-create").addEventListener("click", async () =>
     alert(e.message);
   }
 });
+
+// =============================================
+// Library
+// =============================================
+
+let _libPage = 1;
+let _libPerPage = 20;
+let _libHasMore = false;
+
+async function loadLibrary(append = false) {
+  setBanner("library-error", "");
+  const grid = document.getElementById("lib-grid");
+  const empty = document.getElementById("lib-empty");
+  const moreWrap = document.getElementById("lib-more-wrap");
+
+  if (!append) {
+    grid.innerHTML = "";
+    _libPage = 1;
+  }
+
+  const section = document.getElementById("lib-section").value;
+  const status = document.getElementById("lib-status").value;
+  const search = document.getElementById("lib-search").value.trim();
+
+  const params = new URLSearchParams();
+  params.set("page", String(_libPage));
+  params.set("per_page", String(_libPerPage));
+  if (section) params.set("section", section);
+  if (status) params.set("status", status);
+  if (search) params.set("search", search);
+
+  try {
+    const data = await apiGet("/api/v1/library/entries?" + params.toString());
+    const entries = data.entries || [];
+    _libHasMore = data.total > _libPage * _libPerPage;
+
+    if (entries.length === 0 && !append) {
+      grid.classList.add("hidden");
+      empty.classList.remove("hidden");
+      moreWrap.classList.add("hidden");
+      return;
+    }
+
+    grid.classList.remove("hidden");
+    empty.classList.add("hidden");
+
+    for (const e of entries) {
+      const card = document.createElement("div");
+      card.className = "lib-card";
+      const sectionClass = "section-" + (e.section || "").toLowerCase();
+      const tagsHtml = (e.tags || [])
+        .map((t) => `<span class="lib-tag">${escapeHtml(t)}</span>`)
+        .join("");
+      card.innerHTML = `
+        <div class="lib-card-title">${escapeHtml(e.title)}</div>
+        <div class="lib-card-meta">
+          <span class="lib-badge ${sectionClass}">${escapeHtml(e.section || "")}</span>
+          ${e.status ? `<span class="lib-badge">${escapeHtml(e.status)}</span>` : ""}
+          ${e.captured_at ? `<span class="muted">${new Date(e.captured_at).toLocaleDateString()}</span>` : ""}
+        </div>
+        <div class="lib-tags">${tagsHtml}</div>
+      `;
+      card.addEventListener("click", () => openEntryModal(e.id));
+      grid.appendChild(card);
+    }
+
+    moreWrap.classList.toggle("hidden", !_libHasMore);
+  } catch (err) {
+    console.error(err);
+    setBanner("library-error", err.message || "Could not load library.");
+  }
+}
+
+async function loadLibrarySections() {
+  try {
+    const data = await apiGet("/api/v1/library/sections");
+    const select = document.getElementById("lib-section");
+    const current = select.value;
+    // Keep first option, remove others
+    while (select.children.length > 1) select.removeChild(select.lastChild);
+    for (const s of data.sections || []) {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      select.appendChild(opt);
+    }
+    select.value = current;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function openEntryModal(entryId) {
+  const modal = document.getElementById("entry-modal");
+  const titleEl = document.getElementById("entry-modal-title");
+  const metaEl = document.getElementById("entry-modal-meta");
+  const bodyEl = document.getElementById("entry-modal-body");
+
+  titleEl.textContent = "Loading...";
+  metaEl.innerHTML = "";
+  bodyEl.innerHTML = "";
+  modal.classList.remove("hidden");
+
+  try {
+    const data = await apiGet("/api/v1/library/entries/" + encodeURIComponent(entryId));
+    titleEl.textContent = data.title || "Untitled";
+    const sectionClass = "section-" + (data.section || "").toLowerCase();
+    const tagsHtml = (data.tags || [])
+      .map((t) => `<span class="lib-tag">${escapeHtml(t)}</span>`)
+      .join("");
+    metaEl.innerHTML = `
+      <span class="lib-badge ${sectionClass}">${escapeHtml(data.section || "")}</span>
+      ${data.status ? `<span class="lib-badge">${escapeHtml(data.status)}</span>` : ""}
+      ${data.captured_at ? `<span class="muted">${new Date(data.captured_at).toLocaleString()}</span>` : ""}
+      <div class="lib-tags" style="margin-top:0.5rem;">${tagsHtml}</div>
+    `;
+    bodyEl.innerHTML = typeof marked !== "undefined" ? marked.parse(data.markdown || "") : escapeHtml(data.markdown || "");
+  } catch (err) {
+    titleEl.textContent = "Error";
+    bodyEl.textContent = err.message || "Failed to load entry.";
+  }
+}
+
+document.getElementById("entry-modal-close").addEventListener("click", () => {
+  document.getElementById("entry-modal").classList.add("hidden");
+});
+
+document.getElementById("entry-modal").addEventListener("click", (e) => {
+  if (e.target.id === "entry-modal") {
+    document.getElementById("entry-modal").classList.add("hidden");
+  }
+});
+
+document.getElementById("lib-filter-btn").addEventListener("click", () => {
+  loadLibrary(false);
+});
+
+document.getElementById("lib-search").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loadLibrary(false);
+});
+
+document.getElementById("lib-more-btn").addEventListener("click", () => {
+  _libPage += 1;
+  loadLibrary(true);
+});
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 // =============================================
 // Command input
