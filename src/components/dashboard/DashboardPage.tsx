@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavTabs } from "./NavTabs";
 import { Toolbar } from "./Toolbar";
@@ -6,12 +6,13 @@ import { Overview } from "./Overview";
 import { Commands } from "./Commands";
 import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
-import { LibraryPage } from "@/components/library/LibraryPage";
-import { GraphPage } from "@/components/graph/GraphPage";
-import { TimelinePage } from "@/components/timeline/TimelinePage";
-import { AnalysisPage } from "@/components/analysis/AnalysisPage";
-import { PlanningPage } from "@/components/planning/PlanningPage";
 import { LogOut } from "lucide-react";
+
+const LibraryPage = lazy(() => import("@/components/library/LibraryPage").then((m) => ({ default: m.LibraryPage })));
+const GraphPage = lazy(() => import("@/components/graph/GraphPage").then((m) => ({ default: m.GraphPage })));
+const TimelinePage = lazy(() => import("@/components/timeline/TimelinePage").then((m) => ({ default: m.TimelinePage })));
+const AnalysisPage = lazy(() => import("@/components/analysis/AnalysisPage").then((m) => ({ default: m.AnalysisPage })));
+const PlanningPage = lazy(() => import("@/components/planning/PlanningPage").then((m) => ({ default: m.PlanningPage })));
 
 export function DashboardPage() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
@@ -54,15 +55,21 @@ export function DashboardPage() {
         <Toolbar />
         <NavTabs active={activeTab} onChange={setActiveTab} />
 
-        {activeTab === "overview" && <Overview />}
-        {activeTab === "library" && <LibraryPage />}
-        {activeTab === "graph" && <GraphPage />}
-        {activeTab === "timeline" && <TimelinePage />}
-        {activeTab === "analysis" && <AnalysisPage />}
-        {activeTab === "planning" && <PlanningPage />}
-        {activeTab === "commands" && <Commands />}
-        {activeTab === "reminders" && <Reminders />}
-        {activeTab === "cmd" && <CommandInput />}
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          </div>
+        }>
+          {activeTab === "overview" && <Overview />}
+          {activeTab === "library" && <LibraryPage />}
+          {activeTab === "graph" && <GraphPage />}
+          {activeTab === "timeline" && <TimelinePage />}
+          {activeTab === "analysis" && <AnalysisPage />}
+          {activeTab === "planning" && <PlanningPage />}
+          {activeTab === "commands" && <Commands />}
+          {activeTab === "reminders" && <Reminders />}
+          {activeTab === "cmd" && <CommandInput />}
+        </Suspense>
       </div>
     </div>
   );
