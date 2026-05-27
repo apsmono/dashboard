@@ -139,7 +139,7 @@ export function useLibraryEntries(filters: LibraryFilters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [filters.q, filters.section, filters.tag, filters.status, filters.page, filters.per_page]);
+  }, [filters.search, filters.section, filters.tag, filters.status, filters.page, filters.per_page]);
 
   useEffect(() => {
     fetchData();

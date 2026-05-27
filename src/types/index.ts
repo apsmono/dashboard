@@ -74,7 +74,7 @@ export interface LibraryListResponse {
 }
 
 export interface LibraryFilters {
-  q?: string;
+  search?: string;
   section?: string;
   tag?: string;
   status?: string;

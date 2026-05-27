@@ -46,7 +46,7 @@ export function LibraryPage() {
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
 
   const { data, loading, refetch } = useLibraryEntries({
-    q: search || undefined,
+    search: search || undefined,
     section: section || undefined,
     page,
     per_page: perPage,

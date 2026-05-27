@@ -50,7 +50,7 @@ export async function sendCommand(text: string): Promise<{ status: string; reply
 // ---------------------------------------------------------------------------
 
 export interface LibraryFilters {
-  q?: string;
+  search?: string;
   section?: string;
   tag?: string;
   status?: string;
@@ -63,7 +63,7 @@ export async function fetchLibraryEntries(
   opts: LibraryFilters = {}
 ): Promise<LibraryListResponse> {
   const params = new URLSearchParams();
-  if (opts.q) params.set("q", opts.q);
+  if (opts.search) params.set("search", opts.search);
   if (opts.section) params.set("section", opts.section);
   if (opts.tag) params.set("tag", opts.tag);
   if (opts.status) params.set("status", opts.status);
