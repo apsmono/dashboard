@@ -1,25 +1,34 @@
 import { useState } from "react";
-import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb } from "lucide-react";
+import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useGoals, useProjects, useFocusSuggestions } from "@/hooks/useApi";
 import { generateWeeklyReview } from "@/lib/api";
 
+interface ReviewData {
+  status: string;
+  review: string;
+  wins: string[];
+  gaps: string[];
+  next_focus: string;
+  recent_count: number;
+}
+
 export function PlanningPage() {
   const { data: goalsData, loading: goalsLoading } = useGoals();
   const { data: projectsData, loading: projectsLoading } = useProjects();
   const { data: focusData, loading: focusLoading } = useFocusSuggestions();
-  const [review, setReview] = useState<string | null>(null);
+  const [review, setReview] = useState<ReviewData | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
 
   const handleGenerateReview = async () => {
     setReviewLoading(true);
     try {
       const res = await generateWeeklyReview();
-      setReview(JSON.stringify(res, null, 2));
+      setReview(res);
     } catch (e) {
-      setReview("Failed to generate review.");
+      setReview(null);
     } finally {
       setReviewLoading(false);
     }
@@ -145,9 +154,53 @@ export function PlanningPage() {
           Generate Review
         </Button>
         {review && (
-          <pre className="mt-3 max-h-64 overflow-auto rounded-lg border border-border bg-surface p-3 text-xs text-text">
-            {review}
-          </pre>
+          <div className="mt-4 space-y-4">
+            <div className="rounded-lg border border-border bg-surface p-3">
+              <div className="mb-2 text-xs font-medium text-muted">Summary</div>
+              <p className="text-sm text-text">{review.review}</p>
+            </div>
+
+            {review.wins.length > 0 && (
+              <div>
+                <div className="mb-1 flex items-center gap-1 text-xs font-medium text-success">
+                  <Trophy size={12} />
+                  Wins
+                </div>
+                <div className="space-y-1">
+                  {review.wins.map((w, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-text">
+                      <CheckCircle2 size={12} className="text-success" />
+                      {w}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {review.gaps.length > 0 && (
+              <div>
+                <div className="mb-1 flex items-center gap-1 text-xs font-medium text-warning">
+                  <AlertCircle size={12} />
+                  Gaps
+                </div>
+                <div className="space-y-1">
+                  {review.gaps.map((g, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-text">
+                      <ArrowRight size={12} className="text-warning" />
+                      {g}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {review.next_focus && (
+              <div className="rounded-lg border border-accent/20 bg-accent/5 p-3">
+                <div className="mb-1 text-xs font-medium text-accent">Next Focus</div>
+                <p className="text-sm text-text">{review.next_focus}</p>
+              </div>
+            )}
+          </div>
         )}
       </Card>
     </div>

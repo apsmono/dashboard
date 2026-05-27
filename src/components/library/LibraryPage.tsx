@@ -39,6 +39,7 @@ function platformIcon(source_url?: string) {
 export function LibraryPage() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,7 +63,13 @@ export function LibraryPage() {
     refetch();
   }, [refetch]);
 
-  // Reset to page 1 when search or section changes
+  // Debounce search input
+  useEffect(() => {
+    const timeout = setTimeout(() => setSearch(searchInput), 300);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
+
+  // Reset to page 1 when debounced search or section changes
   useEffect(() => {
     setPage(1);
   }, [search, section]);
@@ -76,8 +83,8 @@ export function LibraryPage() {
           <Input
             className="pl-9"
             placeholder="Search library..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         <Button onClick={() => setModalOpen(true)} className="shrink-0">

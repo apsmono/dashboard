@@ -3,9 +3,19 @@ import { Clock, Calendar, Loader2, Filter } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useTimeline } from "@/hooks/useApi";
+import { EntryDetailModal } from "@/components/library/EntryDetailModal";
 import type { TimelineDay } from "@/lib/api";
+import type { LibraryEntry } from "@/types";
 
-function MonthGroup({ month, days }: { month: string; days: TimelineDay[] }) {
+function MonthGroup({
+  month,
+  days,
+  onSelect,
+}: {
+  month: string;
+  days: TimelineDay[];
+  onSelect: (entry: { id: string; title: string; section: string; status: string; datetime: string }) => void;
+}) {
   return (
     <div className="mb-6">
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
@@ -23,7 +33,8 @@ function MonthGroup({ month, days }: { month: string; days: TimelineDay[] }) {
               {day.entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-surface transition-colors"
+                  className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-surface transition-colors cursor-pointer"
+                  onClick={() => onSelect(entry)}
                 >
                   <span className="text-xs text-muted">
                     <Clock size={10} />
@@ -44,6 +55,7 @@ function MonthGroup({ month, days }: { month: string; days: TimelineDay[] }) {
 
 export function TimelinePage() {
   const [section, setSection] = useState("");
+  const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
   const { data, loading } = useTimeline({ section: section || undefined });
 
   const days = data?.days ?? [];
@@ -90,10 +102,32 @@ export function TimelinePage() {
       ) : (
         <div className="relative border-l-2 border-border pl-4">
           {sortedMonths.map((month) => (
-            <MonthGroup key={month} month={month} days={monthGroups[month]} />
+            <MonthGroup
+              key={month}
+              month={month}
+              days={monthGroups[month]}
+              onSelect={(entry) =>
+                setSelectedEntry({
+                  id: entry.id,
+                  title: entry.title,
+                  section: entry.section,
+                  category: entry.section,
+                  status: entry.status,
+                  type: "entry",
+                  tags: [],
+                  captured_at: entry.datetime,
+                  path: "",
+                })
+              }
+            />
           ))}
         </div>
       )}
+
+      <EntryDetailModal
+        entry={selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+      />
     </div>
   );
 }
