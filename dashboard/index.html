@@ -15,7 +15,7 @@
     </div>
 
     <div id="dashboard" class="hidden">
-      <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+      <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <h1>Dashboard</h1>
         <div>
           <span id="user-email" style="margin-right:1rem;color:var(--muted);"></span>
@@ -23,13 +23,34 @@
         </div>
       </header>
 
+      <!-- Toolbar: viewport + theme toggles -->
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <span class="toolbar-label">View</span>
+          <button class="btn-toggle" data-viewmode="desktop" id="btn-view-desktop">🖥 Desktop</button>
+          <button class="btn-toggle" data-viewmode="mobile" id="btn-view-mobile">📱 Mobile</button>
+        </div>
+        <div class="toolbar-group">
+          <span class="toolbar-label">Theme</span>
+          <button class="btn-toggle" data-theme="dark" id="btn-theme-dark">🌙</button>
+          <button class="btn-toggle" data-theme="light" id="btn-theme-light">☀</button>
+          <button class="btn-toggle" data-theme="system" id="btn-theme-system">🖥 System</button>
+        </div>
+      </div>
+
       <nav id="nav">
         <a href="#" data-view="overview" class="active">Overview</a>
+        <a href="#" data-view="library">Library</a>
+        <a href="#" data-view="graph">Graph</a>
+        <a href="#" data-view="timeline">Timeline</a>
+        <a href="#" data-view="analysis">Analysis</a>
+        <a href="#" data-view="planning">Planning</a>
         <a href="#" data-view="commands">Commands</a>
         <a href="#" data-view="reminders">Reminders</a>
         <a href="#" data-view="cmd">Send Command</a>
       </nav>
 
+      <!-- Overview -->
       <div id="view-overview">
         <p id="overview-error" class="banner-error hidden" role="alert"></p>
         <div class="card">
@@ -49,6 +70,52 @@
         </div>
       </div>
 
+      <!-- Library -->
+      <div id="view-library" class="hidden">
+        <div class="placeholder">
+          <div class="placeholder-icon">📚</div>
+          <h3>Library Browser</h3>
+          <p class="muted">Browse, search, and filter all knowledge entries.<br>Coming in Phase 2.</p>
+        </div>
+      </div>
+
+      <!-- Graph -->
+      <div id="view-graph" class="hidden">
+        <div class="placeholder">
+          <div class="placeholder-icon">🕸</div>
+          <h3>Knowledge Graph</h3>
+          <p class="muted">Visualize connections between entries.<br>Coming in Phase 3.</p>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div id="view-timeline" class="hidden">
+        <div class="placeholder">
+          <div class="placeholder-icon">📅</div>
+          <h3>Timeline</h3>
+          <p class="muted">Chronological stream of all captures.<br>Coming in Phase 4.</p>
+        </div>
+      </div>
+
+      <!-- Analysis -->
+      <div id="view-analysis" class="hidden">
+        <div class="placeholder">
+          <div class="placeholder-icon">📊</div>
+          <h3>Analysis</h3>
+          <p class="muted">Tag clouds, trends, gaps, and AI synthesis.<br>Coming in Phase 5.</p>
+        </div>
+      </div>
+
+      <!-- Planning -->
+      <div id="view-planning" class="hidden">
+        <div class="placeholder">
+          <div class="placeholder-icon">🎯</div>
+          <h3>Planning</h3>
+          <p class="muted">Goals, projects, and weekly reviews.<br>Coming in Phase 6.</p>
+        </div>
+      </div>
+
+      <!-- Commands -->
       <div id="view-commands" class="hidden">
         <div class="card">
           <h2>Recent Commands</h2>
@@ -59,6 +126,7 @@
         </div>
       </div>
 
+      <!-- Reminders -->
       <div id="view-reminders" class="hidden">
         <p id="reminders-error" class="banner-error hidden" role="alert"></p>
         <div class="card">
@@ -79,6 +147,7 @@
         </div>
       </div>
 
+      <!-- Send Command -->
       <div id="view-cmd" class="hidden">
         <div class="card">
           <h2>Send Command</h2>

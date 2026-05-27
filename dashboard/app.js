@@ -1,5 +1,7 @@
-import { onAuthChanged, signIn, doSignOut, currentUser } from "./auth.js";
+import { onAuthChanged, signIn, doSignOut } from "./auth.js";
 import { apiGet, apiPost, apiDelete, sendCommand } from "./api.js";
+import { initTheme, setTheme, getTheme } from "./theme.js";
+import { initViewport, setView, getView } from "./viewport.js";
 
 const loginGate = document.getElementById("login-gate");
 const dashboard = document.getElementById("dashboard");
@@ -8,14 +10,62 @@ const userEmail = document.getElementById("user-email");
 
 const views = {
   overview: document.getElementById("view-overview"),
+  library: document.getElementById("view-library"),
+  graph: document.getElementById("view-graph"),
+  timeline: document.getElementById("view-timeline"),
+  analysis: document.getElementById("view-analysis"),
+  planning: document.getElementById("view-planning"),
   commands: document.getElementById("view-commands"),
   reminders: document.getElementById("view-reminders"),
   cmd: document.getElementById("view-cmd"),
 };
 
+// =============================================
+// Theme & Viewport initialization
+// =============================================
+
+initTheme();
+initViewport();
+
+// Theme toggle buttons
+function _refreshThemeButtons() {
+  const current = getTheme();
+  document.querySelectorAll("[data-theme]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.theme === current);
+  });
+}
+_refreshThemeButtons();
+
+document.querySelectorAll("[data-theme]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setTheme(btn.dataset.theme);
+    _refreshThemeButtons();
+  });
+});
+
+// Viewport toggle buttons
+function _refreshViewButtons() {
+  const current = getView();
+  document.querySelectorAll("[data-viewmode]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.viewmode === current);
+  });
+}
+_refreshViewButtons();
+
+document.querySelectorAll("[data-viewmode]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setView(btn.dataset.viewmode);
+    _refreshViewButtons();
+  });
+});
+
+// =============================================
+// Navigation
+// =============================================
+
 function showView(name) {
   Object.values(views).forEach((el) => el.classList.add("hidden"));
-  views[name].classList.remove("hidden");
+  if (views[name]) views[name].classList.remove("hidden");
   nav.querySelectorAll("a").forEach((a) => a.classList.remove("active"));
   const active = nav.querySelector(`[data-view="${name}"]`);
   if (active) active.classList.add("active");
@@ -30,6 +80,10 @@ nav.addEventListener("click", (e) => {
     if (e.target.dataset.view === "reminders") loadReminders();
   }
 });
+
+// =============================================
+// Auth
+// =============================================
 
 document.getElementById("btn-login").addEventListener("click", async () => {
   try {
@@ -57,6 +111,10 @@ onAuthChanged((user) => {
   }
 });
 
+// =============================================
+// Utilities
+// =============================================
+
 function setBanner(id, message) {
   const el = document.getElementById(id);
   if (!message) {
@@ -68,7 +126,10 @@ function setBanner(id, message) {
   el.classList.remove("hidden");
 }
 
+// =============================================
 // Overview
+// =============================================
+
 async function loadOverview() {
   setBanner("overview-error", "");
   try {
@@ -95,7 +156,10 @@ async function loadOverview() {
   }
 }
 
+// =============================================
 // Commands
+// =============================================
+
 async function loadCommands() {
   try {
     const cmds = await apiGet("/api/v1/commands");
@@ -113,7 +177,10 @@ async function loadCommands() {
   }
 }
 
+// =============================================
 // Reminders
+// =============================================
+
 async function loadReminders() {
   setBanner("reminders-error", "");
   const tbody = document.getElementById("reminders-tbody");
@@ -184,7 +251,10 @@ document.getElementById("reminder-create").addEventListener("click", async () =>
   }
 });
 
+// =============================================
 // Command input
+// =============================================
+
 document.getElementById("dash-cmd-send").addEventListener("click", async () => {
   const input = document.getElementById("dash-cmd-input");
   const text = input.value.trim();
