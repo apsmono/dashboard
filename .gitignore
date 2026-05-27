@@ -1,16 +1,26 @@
-# Local environment
-.env
-.credentials/
-
-# Firebase web config (contains API keys)
-shared/firebase-config.js
-
-# Node.js
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+dist-ssr/
+*.local
+
+# Environment
+.env
+.env.*
 
 # IDE
 .vscode/
 .idea/
 .claude/
 .cursor/
+
+# macOS
+.DS_Store
+
+# Firebase config (injected during CI)
+shared/firebase-config.js
+
+# Credentials
+.credentials/

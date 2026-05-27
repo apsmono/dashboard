@@ -1,17 +1,56 @@
-# Dashboard (static site)
+# Dashboard
 
-Portfolio landing (`index.html` + `portfolio.css`) and an authenticated **command center** under `dashboard/` (library stats, integration health, command history, reminders, raw command sender).
+React + TypeScript portfolio and authenticated command center.
 
-## Configure before deploy
+## Stack
 
-1. **`shared/firebase-config.js`** — Replace placeholders with your Firebase web app config (Console → Project settings). Set **`API_BASE`** to your FastAPI origin (MacMini / Railway), for example `https://your-host.example.com`.
-2. **Backend** — Set `FRONTEND_ORIGIN` to your GitHub Pages site origin (scheme + host, no trailing slash) so the browser can call `/api/v1/*` with CORS. Firebase Admin must accept the same Google sign-in project as the web config.
+- **Vite** — Build tool
+- **React 19** — UI framework
+- **TypeScript** — Type safety
+- **Tailwind CSS v4** — Styling
+- **Lucide React** — Icons
+- **Firebase Auth** — Google Sign-In
 
-## Deploy
+## Development
 
-- **Monorepo → GitHub Pages:** `.github/workflows/deploy-dashboard.yml` uploads `./subprojects/dashboard` on every push to `main`.
-- **Standalone `apsmono/dashboard`:** `.github/workflows/sync-subprojects.yml` mirrors this folder on each `main` push (requires `SYNC_PAT`).
+```bash
+npm install
+npm run dev
+```
 
-## Local preview
+Open `http://localhost:5173/dashboard/`
 
-Serve the folder with any static server from `subprojects/dashboard` (Firebase Auth popup requires `http://localhost` or HTTPS; use `python -m http.server` from this directory for quick checks).
+## Build
+
+```bash
+npm run build
+```
+
+Output goes to `dist/`.
+
+## Configuration
+
+Set these in GitHub Actions secrets for deploy:
+
+| Secret | Description |
+|--------|-------------|
+| `FIREBASE_API_KEY` | Firebase web API key |
+| `API_BASE` | Backend URL (default: `https://macmini.local:8000`) |
+
+For local development, create `.env`:
+
+```
+VITE_FIREBASE_API_KEY=your_key
+VITE_API_BASE=https://macmini.local:8000
+```
+
+## URLs
+
+| Path | Description |
+|------|-------------|
+| `/dashboard/` | Dashboard (auth-gated) |
+| `/dashboard/#/view` | Public portfolio |
+
+## Project Structure
+
+See `docs/ARCHITECTURE.md` for full details.
