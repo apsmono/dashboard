@@ -313,13 +313,17 @@ export function useSaveLink() {
 
 export function useGraphData(maxNodes?: number) {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchGraphData>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchGraphData(maxNodes);
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -330,7 +334,7 @@ export function useGraphData(maxNodes?: number) {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 // ---------------------------------------------------------------------------
@@ -339,13 +343,17 @@ export function useGraphData(maxNodes?: number) {
 
 export function useTimeline(filters?: { section?: string; from_date?: string; to_date?: string }) {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchTimeline>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchTimeline(filters);
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -356,7 +364,7 @@ export function useTimeline(filters?: { section?: string; from_date?: string; to
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 // ---------------------------------------------------------------------------
@@ -365,13 +373,17 @@ export function useTimeline(filters?: { section?: string; from_date?: string; to
 
 export function useTagsAnalysis() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchTagsAnalysis>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchTagsAnalysis();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -382,18 +394,22 @@ export function useTagsAnalysis() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 export function useGapsAnalysis() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchGapsAnalysis>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchGapsAnalysis();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -404,18 +420,22 @@ export function useGapsAnalysis() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 export function useActivityAnalysis() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchActivityAnalysis>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchActivityAnalysis();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -426,7 +446,7 @@ export function useActivityAnalysis() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 // ---------------------------------------------------------------------------
@@ -435,13 +455,17 @@ export function useActivityAnalysis() {
 
 export function useGoals() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchGoals>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchGoals();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -452,18 +476,22 @@ export function useGoals() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 export function useProjects() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchProjects>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchProjects();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -474,18 +502,22 @@ export function useProjects() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
 
 export function useFocusSuggestions() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchFocusSuggestions>> | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetchFocusSuggestions();
       setData(res);
     } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
       console.error(e);
     } finally {
       setLoading(false);
@@ -496,5 +528,5 @@ export function useFocusSuggestions() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, refetch: fetchData };
+  return { data, error, loading, refetch: fetchData };
 }
