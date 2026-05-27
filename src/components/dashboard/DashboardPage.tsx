@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { LoginGate } from "./LoginGate";
 import { NavTabs } from "./NavTabs";
 import { Toolbar } from "./Toolbar";
 import { Overview } from "./Overview";
@@ -11,7 +10,7 @@ import { Placeholder } from "./Placeholder";
 import { LogOut } from "lucide-react";
 
 export function DashboardPage() {
-  const { user, loading, signIn, signOut, isAuthenticated } = useAuth();
+  const { user, loading, signOut, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   if (loading) {
@@ -23,7 +22,12 @@ export function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    return <LoginGate onSignIn={signIn} />;
+    window.location.replace("#/view");
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
   }
 
   return (
