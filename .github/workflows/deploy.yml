@@ -23,6 +23,21 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Write Firebase config
+        run: |
+          cat > shared/firebase-config.js << 'EOF'
+          export const firebaseConfig = {
+            apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+            authDomain: "apsmono-projects.firebaseapp.com",
+            projectId: "apsmono-projects",
+            storageBucket: "apsmono-projects.firebasestorage.app",
+            messagingSenderId: "435886458760",
+            appId: "1:435886458760:web:166261e07ba53b76945c3d",
+            measurementId: "G-T73Z5B78FN"
+          };
+          export const API_BASE = "https://macmini.local:8000";
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
