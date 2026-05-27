@@ -25,6 +25,8 @@ import {
 import type { LibraryEntry } from "@/types";
 import { LinkCaptureModal } from "./LinkCaptureModal";
 import { EntryDetailModal } from "./EntryDetailModal";
+import { PullIndicator } from "@/components/ui/PullIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 function platformIcon(source_url?: string) {
   if (!source_url) return null;
@@ -58,6 +60,7 @@ export function LibraryPage() {
 
   const { sections } = useLibrarySections();
   const { tags: allTags } = useLibraryTags();
+  const { pullDistance } = usePullToRefresh(refetch);
 
   const entries = data?.entries ?? [];
   const total = data?.total ?? 0;
@@ -88,6 +91,7 @@ export function LibraryPage() {
 
   return (
     <div className="space-y-4">
+      <PullIndicator distance={pullDistance} />
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">

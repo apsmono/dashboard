@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useTimeline } from "@/hooks/useApi";
 import { EntryDetailModal } from "@/components/library/EntryDetailModal";
+import { PullIndicator } from "@/components/ui/PullIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import type { TimelineDay } from "@/lib/api";
 import type { LibraryEntry } from "@/types";
 
@@ -56,7 +58,8 @@ function MonthGroup({
 export function TimelinePage() {
   const [section, setSection] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
-  const { data, loading } = useTimeline({ section: section || undefined });
+  const { data, loading, refetch } = useTimeline({ section: section || undefined });
+  const { pullDistance } = usePullToRefresh(refetch);
 
   const days = data?.days ?? [];
 
@@ -72,6 +75,7 @@ export function TimelinePage() {
 
   return (
     <div className="space-y-4">
+      <PullIndicator distance={pullDistance} />
       <div className="flex items-center gap-2">
         <Filter size={14} className="text-muted" />
         <select
