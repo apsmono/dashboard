@@ -7,6 +7,7 @@ import { Commands } from "./Commands";
 import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
 import { Placeholder } from "./Placeholder";
+import { LibraryPage } from "@/components/library/LibraryPage";
 import { LogOut } from "lucide-react";
 
 export function DashboardPage() {
@@ -51,7 +52,7 @@ export function DashboardPage() {
         <NavTabs active={activeTab} onChange={setActiveTab} />
 
         {activeTab === "overview" && <Overview />}
-        {activeTab === "library" && <Placeholder title="Library Browser" phase="Coming in Phase 2" />}
+        {activeTab === "library" && <LibraryPage />}
         {activeTab === "graph" && <Placeholder title="Knowledge Graph" phase="Coming in Phase 3" />}
         {activeTab === "timeline" && <Placeholder title="Timeline" phase="Coming in Phase 4" />}
         {activeTab === "analysis" && <Placeholder title="Analysis" phase="Coming in Phase 5" />}

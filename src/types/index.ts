@@ -50,3 +50,25 @@ export interface Contact {
   href: string;
   icon: string;
 }
+
+export interface LibraryEntry {
+  id: string;
+  title: string;
+  section: string;
+  category: string;
+  status: string;
+  type: string;
+  tags: string[];
+  captured_at: string;
+  source_url?: string;
+  path: string;
+  markdown?: string;
+  related?: string[];
+}
+
+export interface LibraryListResponse {
+  entries: LibraryEntry[];
+  total: number;
+  page: number;
+  per_page: number;
+}
