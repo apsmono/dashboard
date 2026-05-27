@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { X, Link2, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { X, Link2, Loader2, AlertCircle, CheckCircle, Globe, Play, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { sendCommand, checkDuplicateUrl } from "@/lib/api";
+import { useLinkPreview, useDuplicateCheck, useSaveLink } from "@/hooks/useApi";
 
 interface LinkCaptureModalProps {
   open: boolean;
@@ -10,142 +10,236 @@ interface LinkCaptureModalProps {
   onSaved?: () => void;
 }
 
+function isValidUrl(text: string): boolean {
+  try {
+    const u = new URL(text);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function platformIcon(platform: string) {
+  if (platform === "youtube") return <Play size={16} className="text-danger" />;
+  if (platform === "github") return <GitBranch size={16} className="text-text" />;
+  return <Globe size={16} className="text-muted" />;
+}
+
 export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalProps) {
   const [url, setUrl] = useState("");
-  const [tags, setTags] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [duplicate, setDuplicate] = useState(false);
+  const [tagsInput, setTagsInput] = useState("");
+  const [status, setStatus] = useState("to-read");
+  const [step, setStep] = useState<"input" | "preview" | "saving" | "done">("input");
+
+  const { state: previewState, fetchPreview, reset: resetPreview } = useLinkPreview();
+  const { isDuplicate, checking: checkingDup, check: checkDup, reset: resetDup } = useDuplicateCheck();
+  const { save, saving, error: saveError } = useSaveLink();
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUrlChange = useCallback(
+    (value: string) => {
+      setUrl(value);
+      resetPreview();
+      resetDup();
+      setStep("input");
+
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (isValidUrl(value)) {
+        debounceRef.current = setTimeout(() => {
+          checkDup(value);
+        }, 400);
+      }
+    },
+    [resetPreview, resetDup, checkDup]
+  );
+
+  const handleFetchPreview = useCallback(async () => {
+    if (!isValidUrl(url)) return;
+    setStep("preview");
+    try {
+      await fetchPreview(url);
+    } catch {
+      // error handled in state
+    }
+  }, [url, fetchPreview]);
+
+  const handleSave = useCallback(async () => {
+    if (!isValidUrl(url)) return;
+    setStep("saving");
+    const tags = tagsInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    try {
+      await save(url, tags, status);
+      setStep("done");
+      setTimeout(() => {
+        onSaved?.();
+        onClose();
+      }, 800);
+    } catch {
+      setStep("preview");
+    }
+  }, [url, tagsInput, status, save, onSaved, onClose]);
+
+  const previewData = previewState.status === "success" ? previewState.data : null;
 
   if (!open) return null;
-
-  const handleCheckDuplicate = async () => {
-    if (!url.trim().startsWith("http")) return;
-    const isDup = await checkDuplicateUrl(url.trim());
-    setDuplicate(isDup);
-  };
-
-  const handleSave = async () => {
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setError("Please enter a URL.");
-      return;
-    }
-    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-      setError("URL must start with http:// or https://");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const isDup = await checkDuplicateUrl(trimmed);
-      if (isDup) {
-        setDuplicate(true);
-        setLoading(false);
-        return;
-      }
-      setDuplicate(false);
-
-      const commandText = `article: ${trimmed}`;
-      const result = await sendCommand(commandText);
-      if (result.status === "ok") {
-        setSuccess(result.reply || "Link saved to library.");
-        setUrl("");
-        setTags("");
-        onSaved?.();
-      } else {
-        setError(result.reply || "Failed to save link.");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Link2 size={18} className="text-accent" />
             Save Link to Library
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-muted hover:text-text hover:bg-surface transition-colors"
+            className="rounded-lg p-1 text-muted transition-colors hover:bg-surface hover:text-text"
           >
             <X size={18} />
           </button>
         </div>
 
         <div className="space-y-4">
+          {/* URL Input */}
           <div>
             <label className="mb-1 block text-sm font-medium text-muted">URL</label>
             <Input
               type="url"
               placeholder="https://example.com/article"
               value={url}
-              onChange={(e) => {
-                setUrl(e.target.value);
-                setDuplicate(false);
-                setError(null);
-              }}
-              onBlur={handleCheckDuplicate}
-              disabled={loading}
+              onChange={(e) => handleUrlChange(e.target.value)}
+              disabled={step === "saving" || step === "done"}
             />
-            {duplicate && (
-              <div className="mt-1 flex items-center gap-1 text-sm text-amber-500">
-                <AlertCircle size={14} />
-                This URL already exists in the library.
-              </div>
+            {!isValidUrl(url) && url.length > 0 && (
+              <p className="mt-1 text-xs text-danger">Please enter a valid URL.</p>
+            )}
+            {isDuplicate === true && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-warning">
+                <AlertCircle size={12} />
+                This URL is already in your library.
+              </p>
+            )}
+            {checkingDup && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted">
+                <Loader2 size={12} className="animate-spin" />
+                Checking for duplicates…
+              </p>
             )}
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-muted">Tags (optional)</label>
-            <Input
-              placeholder="ai, research, tutorial"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              disabled={loading}
-            />
-            <p className="mt-1 text-xs text-muted">Comma-separated tags</p>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 rounded-lg border border-danger/30 bg-banner-error-bg px-3 py-2 text-sm text-danger">
-              <AlertCircle size={14} />
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
-              <CheckCircle size={14} />
-              {success}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={loading || duplicate}>
-              {loading ? (
-                <>
-                  <Loader2 size={14} className="mr-1 animate-spin" />
-                  Saving...
-                </>
+          {/* Fetch Preview Button */}
+          {step === "input" && (
+            <Button
+              onClick={handleFetchPreview}
+              disabled={!isValidUrl(url) || previewState.status === "loading"}
+              className="w-full"
+            >
+              {previewState.status === "loading" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 size={14} className="animate-spin" />
+                  Fetching preview…
+                </span>
               ) : (
-                "Save to Library"
+                "Fetch & Preview"
               )}
             </Button>
-          </div>
+          )}
+
+          {/* Preview & Save */}
+          {(step === "preview" || step === "saving" || step === "done") && (
+            <div className="space-y-4">
+              {previewState.status === "loading" && (
+                <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted">
+                  <Loader2 size={16} className="animate-spin" />
+                  Fetching preview…
+                </div>
+              )}
+
+              {previewState.status === "error" && (
+                <div className="rounded-lg border border-danger bg-banner-error-bg px-3 py-2 text-sm text-banner-error-text">
+                  {previewState.message}
+                </div>
+              )}
+
+              {previewData && (
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    {platformIcon(previewData.platform)}
+                    <span className="text-xs capitalize text-muted">{previewData.platform}</span>
+                  </div>
+                  <h3 className="mb-1 text-sm font-medium text-text">{previewData.title}</h3>
+                  {previewData.description && (
+                    <p className="line-clamp-3 text-xs text-muted">{previewData.description}</p>
+                  )}
+                  {previewData.author && (
+                    <p className="mt-1 text-xs text-muted">By {previewData.author}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Tags & Status */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted">Tags (optional)</label>
+                  <Input
+                    placeholder="ai, research, tutorial"
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                    disabled={step === "saving" || step === "done"}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted">Status</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-input-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                    disabled={step === "saving" || step === "done"}
+                  >
+                    <option value="to-read">To Read</option>
+                    <option value="reading">Reading</option>
+                    <option value="done">Done</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              {step !== "done" && (
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full bg-success/10 text-success hover:bg-success/20 border-success"
+                >
+                  {saving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 size={14} className="animate-spin" />
+                      Saving…
+                    </span>
+                  ) : (
+                    "Save to Library"
+                  )}
+                </Button>
+              )}
+
+              {saveError && (
+                <div className="rounded-lg border border-danger bg-banner-error-bg px-3 py-2 text-sm text-banner-error-text">
+                  {saveError}
+                </div>
+              )}
+
+              {step === "done" && (
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-success bg-success/10 py-3 text-sm font-medium text-success">
+                  <CheckCircle size={16} />
+                  Saved successfully!
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -70,6 +70,31 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* View mode: mobile simulation */
+body.view-mobile {
+  max-width: 430px;
+  margin: 0 auto;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  min-height: 100vh;
+}
+
+body.view-mobile .max-w-5xl {
+  max-width: 100% !important;
+}
+
+body.view-mobile .sm\:grid-cols-2 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+body.view-mobile .sm\:flex-row {
+  flex-direction: column !important;
+}
+
+body.view-mobile .sm\:inline {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
