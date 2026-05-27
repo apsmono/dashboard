@@ -1,0 +1,16 @@
+# Local environment
+.env
+.credentials/
+
+# Firebase web config (contains API keys)
+shared/firebase-config.js
+
+# Node.js
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+.cursor/
