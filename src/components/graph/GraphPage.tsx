@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader2, GitBranch, Filter } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useGraphData } from "@/hooks/useApi";
+import { EntryDetailModal } from "@/components/library/EntryDetailModal";
+import type { LibraryEntry } from "@/types";
 
 interface NodePos {
   id: string;
@@ -85,6 +87,7 @@ export function GraphPage() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedSection, setSelectedSection] = useState("");
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
   const [nodePositions, setNodePositions] = useState<NodePos[]>([]);
 
   const sections = Array.from(new Set(data?.nodes.map((n) => n.section) ?? []));
@@ -185,6 +188,23 @@ export function GraphPage() {
                 transform={`translate(${n.x}, ${n.y})`}
                 onMouseEnter={() => setHoveredNode(n.id)}
                 onMouseLeave={() => setHoveredNode(null)}
+                onClick={() => {
+                  // Find the original entry data
+                  const entry = data?.nodes.find((node) => node.id === n.id);
+                  if (entry) {
+                    setSelectedEntry({
+                      id: entry.id,
+                      title: entry.label,
+                      section: entry.section,
+                      category: entry.section,
+                      status: entry.status,
+                      type: "entry",
+                      tags: [],
+                      captured_at: "",
+                      path: "",
+                    });
+                  }
+                }}
                 style={{ cursor: "pointer" }}
               >
                 <circle
@@ -233,6 +253,11 @@ export function GraphPage() {
         </span>
         <span>{data?.nodes.length ?? 0} nodes · {data?.edges.length ?? 0} edges</span>
       </div>
+
+      <EntryDetailModal
+        entry={selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+      />
     </div>
   );
 }
