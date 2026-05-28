@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User } from "firebase/auth";
-import { onAuthChanged, signInWithGoogle, handleRedirectResult, doSignOut } from "@/lib/firebase";
+import { onAuthChanged, signInWithGoogle, doSignOut } from "@/lib/firebase";
 
 interface AuthState {
   user: User | null;
@@ -11,18 +11,10 @@ export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-
-    // Handle the redirect result from Google Sign-In (signInWithRedirect flow)
-    handleRedirectResult().then(() => {
-      unsubscribe = onAuthChanged((user) => {
-        setState({ user, loading: false });
-      });
+    const unsubscribe = onAuthChanged((user) => {
+      setState({ user, loading: false });
     });
-
-    return () => {
-      unsubscribe?.();
-    };
+    return () => unsubscribe();
   }, []);
 
   const signIn = useCallback(async () => {
