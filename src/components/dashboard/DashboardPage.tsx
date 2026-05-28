@@ -45,7 +45,7 @@ export function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    window.location.replace("#/view");
+    window.location.replace("#/login");
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
