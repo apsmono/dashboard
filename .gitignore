@@ -24,3 +24,4 @@ shared/firebase-config.js
 
 # Credentials
 .credentials/
+dist-upload.zip

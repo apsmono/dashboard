@@ -9,6 +9,8 @@ import { Overview } from "./Overview";
 import { Commands } from "./Commands";
 import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
+import { CommandPalette } from "@/components/CommandPalette";
+import { sendCommand } from "@/lib/api";
 import { LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send } from "lucide-react";
 
 const LibraryPage = lazy(() => import("@/components/library/LibraryPage").then((m) => ({ default: m.LibraryPage })));
@@ -77,6 +79,14 @@ export function DashboardPage() {
             </button>
           </div>
         </header>
+
+        <CommandPalette
+          onNavigate={(tab) => setActiveTab(tab.replace(/\?.*$/, ""))}
+          onCommand={async (text) => {
+            await sendCommand(text);
+            setActiveTab("overview");
+          }}
+        />
 
         <Toolbar />
         {viewMode !== "mobile" && <NavTabs active={activeTab} onChange={setActiveTab} />}
