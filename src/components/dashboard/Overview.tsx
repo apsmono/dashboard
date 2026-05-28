@@ -1,5 +1,5 @@
 import { WidgetCard } from "@/components/ui/WidgetCard";
-import { useDashboardStats, useGoals, useCommands } from "@/hooks/useApi";
+import { useDashboardStats, useGoals, useCommands, useTimeline } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
   Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame
@@ -205,20 +205,28 @@ function AiSuggest() {
 }
 
 function ActivityHeatmap() {
-  // Generate last 84 days (12 weeks) of mock data based on captured_at dates
-  const days: { date: string; level: number }[] = [];
+  // Calculate date range: last 84 days (12 weeks)
   const today = new Date();
+  const fromDate = new Date(today);
+  fromDate.setDate(fromDate.getDate() - 83);
+  const fromStr = fromDate.toISOString().split("T")[0];
+  const toStr = today.toISOString().split("T")[0];
+
+  const { data } = useTimeline({ from_date: fromStr, to_date: toStr });
+  const dailyCounts = data?.daily_counts ?? {};
+
+  // Build 84-day array with real or zero activity
+  const days: { date: string; level: number }[] = [];
   for (let i = 83; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
-    // Simulate activity: higher chance on weekends, random spikes
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const rand = Math.random();
+    const count = dailyCounts[dateStr] ?? 0;
     let level = 0;
-    if (rand > 0.6) level = isWeekend ? 2 : 1;
-    if (rand > 0.85) level = 3;
-    if (rand > 0.95) level = 4;
+    if (count >= 1) level = 1;
+    if (count >= 3) level = 2;
+    if (count >= 5) level = 3;
+    if (count >= 8) level = 4;
     days.push({ date: dateStr, level });
   }
 
