@@ -2,7 +2,7 @@ import { WidgetCard } from "@/components/ui/WidgetCard";
 import { useDashboardStats, useGoals, useCommands } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
-  Zap, Target, TrendingUp, Activity, Send, Sparkles
+  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { sendCommand } from "@/lib/api";
@@ -204,6 +204,76 @@ function AiSuggest() {
   );
 }
 
+function ActivityHeatmap() {
+  // Generate last 84 days (12 weeks) of mock data based on captured_at dates
+  const days: { date: string; level: number }[] = [];
+  const today = new Date();
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    // Simulate activity: higher chance on weekends, random spikes
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const rand = Math.random();
+    let level = 0;
+    if (rand > 0.6) level = isWeekend ? 2 : 1;
+    if (rand > 0.85) level = 3;
+    if (rand > 0.95) level = 4;
+    days.push({ date: dateStr, level });
+  }
+
+  const levelColors = [
+    "bg-border",
+    "bg-accent/20",
+    "bg-accent/40",
+    "bg-accent/70",
+    "bg-accent",
+  ];
+
+  const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <WidgetCard title="Activity" icon={<Flame size={18} />} className="col-span-1 sm:col-span-2 lg:col-span-3">
+      <div className="flex gap-1 overflow-x-auto pb-2">
+        {/* Weekday labels */}
+        <div className="flex flex-col gap-1 mr-2">
+          {weekdayLabels.map((day) => (
+            <div key={day} className="h-3 w-8 text-[10px] text-muted flex items-center">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Heatmap grid - grouped by week */}
+        {Array.from({ length: 12 }).map((_, weekIndex) => (
+          <div key={weekIndex} className="flex flex-col gap-1">
+            {Array.from({ length: 7 }).map((_, dayIndex) => {
+              const dayData = days[weekIndex * 7 + dayIndex];
+              if (!dayData) return null;
+              return (
+                <div
+                  key={dayIndex}
+                  title={`${dayData.date}: ${["No activity", "Light", "Moderate", "High", "Intense"][dayData.level]} activity`}
+                  className={`h-3 w-3 rounded-sm ${levelColors[dayData.level]} transition-colors hover:ring-1 hover:ring-accent/50`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-2 flex items-center gap-2 text-[10px] text-muted">
+        <span>Less</span>
+        {levelColors.map((color, i) => (
+          <div key={i} className={`h-2.5 w-2.5 rounded-sm ${color}`} />
+        ))}
+        <span>More</span>
+      </div>
+    </WidgetCard>
+  );
+}
+
 export function Overview() {
   return (
     <div>
@@ -215,6 +285,7 @@ export function Overview() {
         <ActiveGoals />
         <RecentCommands />
         <AiSuggest />
+        <ActivityHeatmap />
       </div>
     </div>
   );

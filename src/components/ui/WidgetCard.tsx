@@ -11,7 +11,7 @@ interface WidgetCardProps {
 export function WidgetCard({ title, icon, children, className = "", accent = false }: WidgetCardProps) {
   return (
     <div
-      className={`rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-lg ${
+      className={`rounded-xl border border-border bg-card p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 ${
         accent ? "ring-1 ring-accent/20" : ""
       } ${className}`}
     >
