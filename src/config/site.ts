@@ -55,7 +55,7 @@ export const siteConfig = {
       description:
         "This very site — a portfolio landing page plus an authenticated command center with Firebase Auth, library stats, and integration health monitoring.",
       tags: ["React", "TypeScript", "Tailwind CSS", "Firebase"],
-      liveUrl: "https://apsmono.github.io/dashboard/",
+      liveUrl: "https://dashboard.apsmono.com/",
       sourceUrl: "https://github.com/apsmono/dashboard",
       icon: "LayoutDashboard",
     },

@@ -31,12 +31,12 @@ dashboard/
 │   └── ARCHITECTURE.md
 ├── .github/workflows/
 │   └── deploy.yml            # Build + deploy to GitHub Pages
-└── vite.config.ts            # base: '/dashboard/'
+└── vite.config.ts            # base: '/'
 ```
 
 ## Auth Flow
 
-1. User opens `https://apsmono.github.io/dashboard/`
+1. User opens `https://dashboard.apsmono.com/`
 2. `App.tsx` renders `DashboardPage`
 3. `useAuth` listens to Firebase `onAuthStateChanged`
 4. If loading → spinner

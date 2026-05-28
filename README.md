@@ -18,7 +18,7 @@ bun install
 bun run dev
 ```
 
-Open `http://localhost:5173/dashboard/`
+Open `http://localhost:5173/`
 
 ## Build
 
@@ -48,8 +48,8 @@ VITE_API_BASE=https://macmini.local:8000
 
 | Path | Description |
 |------|-------------|
-| `/dashboard/` | Dashboard (auth-gated) |
-| `/dashboard/#/view` | Public portfolio |
+| `/` | Dashboard (auth-gated) |
+| `/#/view` | Public portfolio |
 
 ## Project Structure
 
