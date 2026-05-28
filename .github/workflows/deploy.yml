@@ -30,7 +30,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_BASE: ${{ secrets.API_BASE || 'https://macmini.local:8000' }}
+          VITE_API_BASE: ${{ secrets.API_BASE || 'https://emphasis-egg-books-foundation.trycloudflare.com' }}
         run: bun run build
 
       - name: Setup Pages

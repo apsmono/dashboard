@@ -1,7 +1,7 @@
 import { getIdToken } from "./firebase";
 import type { LibraryListResponse, LibraryEntry } from "@/types";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://macmini.local:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://emphasis-egg-books-foundation.trycloudflare.com";
 
 if (API_BASE.includes("macmini.local") && !window.location.hostname.includes("local")) {
   console.warn("[Dashboard] API_BASE points to macmini.local which is not reachable from the public internet.");
