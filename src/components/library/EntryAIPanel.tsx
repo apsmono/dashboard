@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Send, Loader2, Sparkles, User } from "lucide-react";
+import { Send, Loader2, Sparkles, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface EntryAIPanelProps {
@@ -68,6 +68,10 @@ export function EntryAIPanel({ entryTitle, onAsk, answer, loading, error }: Entr
     [onAsk]
   );
 
+  const handleClear = useCallback(() => {
+    setHistory([]);
+  }, []);
+
   return (
     <div className="flex flex-col gap-3">
       {/* Chat area */}
@@ -75,6 +79,18 @@ export function EntryAIPanel({ entryTitle, onAsk, answer, loading, error }: Entr
         ref={scrollRef}
         className="max-h-[50vh] min-h-[200px] overflow-y-auto rounded-lg border border-border bg-surface p-3 space-y-3"
       >
+        {history.length > 0 && (
+          <div className="flex justify-end">
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted hover:text-danger transition-colors"
+              title="Clear chat"
+            >
+              <Trash2 size={12} />
+              Clear
+            </button>
+          </div>
+        )}
         {history.length === 0 && !loading && (
           <div className="py-6 text-center">
             <Sparkles size={24} className="mx-auto mb-2 text-accent opacity-60" />
