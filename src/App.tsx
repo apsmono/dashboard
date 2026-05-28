@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { PortfolioPage } from "@/components/portfolio/PortfolioPage";
 import { DashboardPage } from "@/components/dashboard/DashboardPage";
 import { LoginPage } from "@/components/LoginPage";
 import { NotFound } from "@/components/NotFound";
 
 function getHashRoute(): string {
   return window.location.hash.replace("#", "") || "/";
+}
+
+function RedirectToPortfolio() {
+  useEffect(() => {
+    window.location.href = "https://www.apsmono.com";
+  }, []);
+  return null;
 }
 
 export default function App() {
@@ -21,7 +27,7 @@ export default function App() {
     case route === "/" || route === "":
       return <DashboardPage />;
     case route === "/view" || route.startsWith("/view"):
-      return <PortfolioPage />;
+      return <RedirectToPortfolio />;
     case route === "/login":
       return <LoginPage />;
     default:
