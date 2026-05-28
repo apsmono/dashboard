@@ -250,6 +250,7 @@ export function LibraryPage() {
       <EntryDetailModal
         entry={selectedEntry}
         onClose={() => setSelectedEntry(null)}
+        onUpdated={handleRefetch}
       />
 
       <LinkCaptureModal

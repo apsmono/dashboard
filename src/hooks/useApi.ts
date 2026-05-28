@@ -18,6 +18,9 @@ import {
   fetchGoals,
   fetchProjects,
   fetchFocusSuggestions,
+  fetchYouTubeTranscript,
+  updateLibraryEntry,
+  synthesizeEntry,
 } from "@/lib/api";
 import type {
   DashboardStats,
@@ -55,6 +58,106 @@ export function useDashboardStats() {
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData };
+}
+
+// ---------------------------------------------------------------------------
+// YouTube transcript
+// ---------------------------------------------------------------------------
+
+type TranscriptState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: Awaited<ReturnType<typeof fetchYouTubeTranscript>> }
+  | { status: "error"; message: string };
+
+export function useYouTubeTranscript() {
+  const [state, setState] = useState<TranscriptState>({ status: "idle" });
+
+  const fetchTranscript = useCallback(async (url: string) => {
+    setState({ status: "loading" });
+    try {
+      const data = await fetchYouTubeTranscript(url);
+      setState({ status: "success", data });
+      return data;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to fetch transcript";
+      setState({ status: "error", message });
+      throw e;
+    }
+  }, []);
+
+  const reset = useCallback(() => setState({ status: "idle" }), []);
+
+  return { state, fetchTranscript, reset };
+}
+
+// ---------------------------------------------------------------------------
+// Update library entry
+// ---------------------------------------------------------------------------
+
+export function useUpdateLibraryEntry() {
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const update = useCallback(async (id: string, body: Parameters<typeof updateLibraryEntry>[1]) => {
+    setUpdating(true);
+    setError("");
+    try {
+      const res = await updateLibraryEntry(id, body);
+      return res;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to update entry";
+      setError(msg);
+      throw e;
+    } finally {
+      setUpdating(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setUpdating(false);
+    setError("");
+  }, []);
+
+  return { update, updating, error, reset };
+}
+
+// ---------------------------------------------------------------------------
+// Entry synthesis (AI Q&A)
+// ---------------------------------------------------------------------------
+
+export function useEntrySynthesis() {
+  const [answer, setAnswer] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const ask = useCallback(async (id: string, query: string) => {
+    setLoading(true);
+    setError("");
+    setAnswer("");
+    try {
+      const res = await synthesizeEntry(id, query);
+      if (res.status !== "ok") {
+        throw new Error(res.reply ?? "AI synthesis failed");
+      }
+      setAnswer(res.answer ?? "");
+      return res;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to synthesize";
+      setError(msg);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setAnswer("");
+    setLoading(false);
+    setError("");
+  }, []);
+
+  return { ask, answer, loading, error, reset };
 }
 
 // ---------------------------------------------------------------------------
@@ -283,14 +386,17 @@ export function useSaveLink() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
 
-  const save = useCallback(async (url: string, tags?: string[], status?: string) => {
+  const save = useCallback(async (url: string, tags?: string[], status?: string, commandText?: string) => {
     setSaving(true);
     setError("");
     try {
-      const commandParts = [`article: ${url}`];
-      if (tags && tags.length > 0) commandParts.push(`tags: ${tags.join(", ")}`);
-      if (status) commandParts.push(`status: ${status}`);
-      const res = await sendCommand(commandParts.join("\n"));
+      const text = commandText ?? (() => {
+        const commandParts = [`article: ${url}`];
+        if (tags && tags.length > 0) commandParts.push(`tags: ${tags.join(", ")}`);
+        if (status) commandParts.push(`status: ${status}`);
+        return commandParts.join("\n");
+      })();
+      const res = await sendCommand(text);
       if (res.status !== "ok") {
         throw new Error(res.reply ?? "Unknown error saving link");
       }

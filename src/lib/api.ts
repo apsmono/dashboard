@@ -39,6 +39,16 @@ export async function apiDelete<T>(path: string): Promise<T> {
   return res.json();
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function sendCommand(text: string): Promise<{ status: string; reply?: string }> {
   const res = await fetch(`${API_BASE}/command`, {
     method: "POST",
@@ -131,6 +141,41 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
 export async function checkDuplicateUrl(url: string): Promise<boolean> {
   const data = await fetchLibraryEntries({ source_url: url, per_page: 1 });
   return data.total > 0;
+}
+
+export interface YouTubeTranscript {
+  video_id: string;
+  title: string;
+  transcript: string;
+  language: string;
+  is_generated: boolean;
+}
+
+export async function fetchYouTubeTranscript(url: string): Promise<YouTubeTranscript> {
+  return apiPost<YouTubeTranscript>("/api/v1/library/youtube-transcript", { url });
+}
+
+export async function updateLibraryEntry(
+  id: string,
+  body: {
+    title?: string;
+    markdown?: string;
+    tags?: string[];
+    status?: string;
+    notes?: string;
+  }
+) {
+  return apiPut<{ status: string; id: string }>(`/api/v1/library/entries/${encodeURIComponent(id)}`, body);
+}
+
+export async function synthesizeEntry(
+  id: string,
+  query: string
+): Promise<{ status: string; answer?: string; sources?: string[]; reply?: string }> {
+  return apiPost<{ status: string; answer?: string; sources?: string[]; reply?: string }>(
+    `/api/v1/library/entries/${encodeURIComponent(id)}/synthesize`,
+    { query }
+  );
 }
 
 // ---------------------------------------------------------------------------

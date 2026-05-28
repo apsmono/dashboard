@@ -1,8 +1,21 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X, Link2, Loader2, AlertCircle, CheckCircle, Globe, Play, GitBranch } from "lucide-react";
+import {
+  X,
+  Link2,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Globe,
+  Play,
+  GitBranch,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useLinkPreview, useDuplicateCheck, useSaveLink } from "@/hooks/useApi";
+import { Badge } from "@/components/ui/Badge";
+import { useLinkPreview, useDuplicateCheck, useSaveLink, useYouTubeTranscript } from "@/hooks/useApi";
 
 interface LinkCaptureModalProps {
   open: boolean;
@@ -30,19 +43,27 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
   const [tagsInput, setTagsInput] = useState("");
   const [status, setStatus] = useState("to-read");
   const [step, setStep] = useState<"input" | "preview" | "saving" | "done">("input");
+  const [notes, setNotes] = useState("");
+  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
 
   const { state: previewState, fetchPreview, reset: resetPreview } = useLinkPreview();
   const { isDuplicate, checking: checkingDup, check: checkDup, reset: resetDup } = useDuplicateCheck();
   const { save, saving, error: saveError, reset: resetSave } = useSaveLink();
+  const { state: transcriptState, fetchTranscript, reset: resetTranscript } = useYouTubeTranscript();
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isYouTube = previewState.status === "success" && previewState.data.platform === "youtube";
 
   const handleUrlChange = useCallback(
     (value: string) => {
       setUrl(value);
       resetPreview();
       resetDup();
+      resetTranscript();
       setStep("input");
+      setNotes("");
+      setTranscriptExpanded(false);
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (isValidUrl(value)) {
@@ -51,7 +72,7 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
         }, 400);
       }
     },
-    [resetPreview, resetDup, checkDup]
+    [resetPreview, resetDup, resetTranscript, checkDup]
   );
 
   const handleFetchPreview = useCallback(async () => {
@@ -64,6 +85,15 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
     }
   }, [url, fetchPreview]);
 
+  const handleFetchTranscript = useCallback(async () => {
+    if (!isValidUrl(url)) return;
+    try {
+      await fetchTranscript(url);
+    } catch {
+      // error handled in state
+    }
+  }, [url, fetchTranscript]);
+
   const handleSave = useCallback(async () => {
     if (!isValidUrl(url)) return;
     setStep("saving");
@@ -71,8 +101,16 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
+
+    // Build command with transcript and notes metadata
+    const commandParts = [`article: ${url}`];
+    if (tags.length > 0) commandParts.push(`tags: ${tags.join(", ")}`);
+    if (status) commandParts.push(`status: ${status}`);
+    if (transcriptState.status === "success") commandParts.push("transcript: true");
+    if (notes.trim()) commandParts.push(`notes: ${notes.trim()}`);
+
     try {
-      await save(url, tags, status);
+      await save(url, tags, status, commandParts.join("\n"));
       setStep("done");
       setTimeout(() => {
         onSaved?.();
@@ -81,7 +119,7 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
     } catch {
       setStep("preview");
     }
-  }, [url, tagsInput, status, save, onSaved, onClose]);
+  }, [url, tagsInput, status, notes, transcriptState, save, onSaved, onClose]);
 
   const previewData = previewState.status === "success" ? previewState.data : null;
 
@@ -92,17 +130,20 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
       setTagsInput("");
       setStatus("to-read");
       setStep("input");
+      setNotes("");
+      setTranscriptExpanded(false);
       resetPreview();
       resetDup();
       resetSave();
+      resetTranscript();
     }
-  }, [open, resetPreview, resetDup, resetSave]);
+  }, [open, resetPreview, resetDup, resetSave, resetTranscript]);
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg max-h-[90vh] overflow-y-auto">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Link2 size={18} className="text-accent" />
@@ -193,6 +234,76 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
                   )}
                 </div>
               )}
+
+              {/* YouTube Transcript */}
+              {isYouTube && (
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText size={14} className="text-accent" />
+                      <span className="text-sm font-medium text-text">Transcript</span>
+                      {transcriptState.status === "success" && (
+                        <Badge variant="default">
+                          EN · Auto
+                        </Badge>
+                      )}
+                    </div>
+                    {transcriptState.status === "idle" && (
+                      <Button size="sm" variant="ghost" onClick={handleFetchTranscript}>
+                        Fetch
+                      </Button>
+                    )}
+                    {transcriptState.status === "loading" && (
+                      <Loader2 size={14} className="animate-spin text-muted" />
+                    )}
+                  </div>
+
+                  {transcriptState.status === "error" && (
+                    <p className="mt-2 text-xs text-muted">
+                      {transcriptState.message} — you can still save without it.
+                    </p>
+                  )}
+
+                  {transcriptState.status === "success" && (
+                    <div className="mt-2">
+                      <div
+                        className={`text-xs text-muted font-mono bg-black/20 rounded p-2 overflow-y-auto ${
+                          transcriptExpanded ? "max-h-[300px]" : "max-h-[80px]"
+                        }`}
+                      >
+                        {transcriptState.data.transcript}
+                      </div>
+                      <button
+                        onClick={() => setTranscriptExpanded((v) => !v)}
+                        className="mt-1 flex items-center gap-1 text-xs text-accent hover:underline"
+                      >
+                        {transcriptExpanded ? (
+                          <>
+                            <ChevronUp size={12} /> Show less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={12} /> Show more
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* My Notes */}
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted">My Notes (optional)</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Jot down key takeaways, quotes, or thoughts…"
+                  className="w-full rounded-lg border border-border bg-input-bg px-3 py-2 text-sm text-text outline-none focus:border-accent resize-y"
+                  disabled={step === "saving" || step === "done"}
+                />
+              </div>
 
               {/* Tags & Status */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -1,11 +1,15 @@
-import { X, ExternalLink, Clock, Tag, FileText, Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { X, ExternalLink, Clock, Tag, FileText, Loader2, Pencil, Sparkles, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { useLibraryEntry } from "@/hooks/useApi";
+import { useLibraryEntry, useUpdateLibraryEntry, useEntrySynthesis } from "@/hooks/useApi";
 import type { LibraryEntry } from "@/types";
+import { EntryEditor } from "./EntryEditor";
+import { EntryAIPanel } from "./EntryAIPanel";
 
 interface EntryDetailModalProps {
   entry: LibraryEntry | null;
   onClose: () => void;
+  onUpdated?: () => void;
 }
 
 function platformIcon(source_url?: string) {
@@ -31,11 +35,47 @@ function renderMarkdownLite(md: string): string {
     .replace(/\n/gim, "<br />");
 }
 
-export function EntryDetailModal({ entry, onClose }: EntryDetailModalProps) {
-  const { data: fullEntry, loading } = useLibraryEntry(entry?.id ?? null);
+type Tab = "read" | "edit" | "ai";
 
-  // Merge list entry with full entry data (full entry has markdown + related)
+export function EntryDetailModal({ entry, onClose, onUpdated }: EntryDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("read");
+  const { data: fullEntry, loading } = useLibraryEntry(entry?.id ?? null);
+  const { update, updating, error: updateError } = useUpdateLibraryEntry();
+  const { ask, answer, loading: aiLoading, error: aiError, reset: resetAi } = useEntrySynthesis();
+
   const displayEntry = fullEntry ?? entry;
+
+  const handleSave = useCallback(
+    async (updates: Parameters<typeof update>[1]) => {
+      if (!displayEntry) return;
+      try {
+        await update(displayEntry.id, updates);
+        setActiveTab("read");
+        onUpdated?.();
+      } catch {
+        // error handled in hook
+      }
+    },
+    [displayEntry, update, onUpdated]
+  );
+
+  const handleAsk = useCallback(
+    async (query: string) => {
+      if (!displayEntry) return;
+      await ask(displayEntry.id, query);
+    },
+    [displayEntry, ask]
+  );
+
+  const handleTabChange = useCallback(
+    (tab: Tab) => {
+      setActiveTab(tab);
+      if (tab === "ai") {
+        resetAi();
+      }
+    },
+    [resetAi]
+  );
 
   if (!entry) return null;
 
@@ -45,13 +85,14 @@ export function EntryDetailModal({ entry, onClose }: EntryDetailModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg"
+        className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {platformIcon(displayEntry?.source_url)}
-            <h2 className="text-lg font-semibold">{displayEntry?.title}</h2>
+            <h2 className="text-lg font-semibold truncate">{displayEntry?.title}</h2>
           </div>
           <button
             onClick={onClose}
@@ -61,6 +102,7 @@ export function EntryDetailModal({ entry, onClose }: EntryDetailModalProps) {
           </button>
         </div>
 
+        {/* Meta row */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Badge>{displayEntry?.section}</Badge>
           <Badge variant="accent">{displayEntry?.status}</Badge>
@@ -101,32 +143,98 @@ export function EntryDetailModal({ entry, onClose }: EntryDetailModalProps) {
           </span>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 size={16} className="animate-spin text-accent" />
+        {/* Tabs */}
+        <div className="mb-4 flex items-center gap-1 border-b border-border">
+          <button
+            onClick={() => handleTabChange("read")}
+            className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === "read"
+                ? "border-accent text-accent"
+                : "border-transparent text-muted hover:text-text"
+            }`}
+          >
+            <BookOpen size={14} />
+            Read
+          </button>
+          <button
+            onClick={() => handleTabChange("edit")}
+            className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === "edit"
+                ? "border-accent text-accent"
+                : "border-transparent text-muted hover:text-text"
+            }`}
+          >
+            <Pencil size={14} />
+            Edit
+          </button>
+          <button
+            onClick={() => handleTabChange("ai")}
+            className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === "ai"
+                ? "border-accent text-accent"
+                : "border-transparent text-muted hover:text-text"
+            }`}
+          >
+            <Sparkles size={14} />
+            AI
+          </button>
+        </div>
+
+        {/* Tab content */}
+        {activeTab === "read" && (
+          <div>
+            {loading && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 size={16} className="animate-spin text-accent" />
+              </div>
+            )}
+            {displayEntry?.markdown && (
+              <div className="rounded-lg border border-border bg-surface p-4">
+                <div
+                  className="prose prose-sm max-w-none text-sm text-text"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdownLite(displayEntry.markdown) }}
+                />
+              </div>
+            )}
+            {displayEntry?.related && displayEntry.related.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold mb-2">Related</h3>
+                <div className="flex flex-wrap gap-1">
+                  {displayEntry.related.map((r) => (
+                    <Badge key={r} variant="default">
+                      {r}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {displayEntry?.markdown && (
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
-            <div
-              className="prose prose-sm max-w-none text-sm text-text"
-              dangerouslySetInnerHTML={{ __html: renderMarkdownLite(displayEntry.markdown) }}
+        {activeTab === "edit" && displayEntry && (
+          <div>
+            {updateError && (
+              <div className="mb-3 rounded-lg border border-danger bg-banner-error-bg px-3 py-2 text-sm text-banner-error-text">
+                {updateError}
+              </div>
+            )}
+            <EntryEditor
+              entry={displayEntry}
+              onSave={handleSave}
+              onCancel={() => setActiveTab("read")}
+              saving={updating}
             />
           </div>
         )}
 
-        {displayEntry?.related && displayEntry.related.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-sm font-semibold mb-2">Related</h3>
-            <div className="flex flex-wrap gap-1">
-              {displayEntry.related.map((r) => (
-                <Badge key={r} variant="default">
-                  {r}
-                </Badge>
-              ))}
-            </div>
-          </div>
+        {activeTab === "ai" && displayEntry && (
+          <EntryAIPanel
+            entryTitle={displayEntry.title}
+            onAsk={handleAsk}
+            answer={answer}
+            loading={aiLoading}
+            error={aiError}
+          />
         )}
       </div>
     </div>

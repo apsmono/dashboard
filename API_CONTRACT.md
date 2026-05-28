@@ -21,8 +21,11 @@
 | DELETE | `/api/v1/reminders/{id}` | Delete reminder | Reminders |
 | GET | `/api/v1/library/entries` | Browse/filter entries | Library |
 | GET | `/api/v1/library/entries/{id}` | Read single entry | Library (modal) |
+| PUT | `/api/v1/library/entries/{id}` | Update entry content | Library (edit) |
+| POST | `/api/v1/library/entries/{id}/synthesize` | AI Q&A on single entry | Library (AI tab) |
 | GET | `/api/v1/library/sections` | List sections | Library (filter) |
 | GET | `/api/v1/library/tags` | List all tags | Library (filter) |
+| POST | `/api/v1/library/youtube-transcript` | Fetch YouTube transcript | Link Capture |
 | GET | `/api/v1/library/graph` | Nodes + edges for graph | Graph |
 | GET | `/api/v1/library/timeline` | Chronological stream | Timeline |
 | GET | `/api/v1/analysis/tags` | Tag frequencies, trending, orphans | Analysis |
