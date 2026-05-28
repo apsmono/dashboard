@@ -43,6 +43,8 @@ function QuickCapture() {
       setText("");
       setSent(true);
       setTimeout(() => setSent(false), 2000);
+      // Notify other components to refresh
+      window.dispatchEvent(new CustomEvent("brain-command-sent"));
     } finally {
       setSending(false);
     }

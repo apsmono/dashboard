@@ -11,7 +11,7 @@ import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
 import { CommandPalette } from "@/components/CommandPalette";
 import { sendCommand } from "@/lib/api";
-import { LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send } from "lucide-react";
+import { LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send, Search } from "lucide-react";
 
 const LibraryPage = lazy(() => import("@/components/library/LibraryPage").then((m) => ({ default: m.LibraryPage })));
 const GraphPage = lazy(() => import("@/components/graph/GraphPage").then((m) => ({ default: m.GraphPage })));
@@ -67,7 +67,16 @@ export function DashboardPage() {
         )}
 
         <header className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <button
+              onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+              className="hidden sm:flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs text-muted hover:text-text transition-colors"
+            >
+              <Search size={12} />
+              <span>⌘K</span>
+            </button>
+          </div>
           <div className="flex items-center gap-4">
             <span className="hidden text-sm text-muted sm:inline">{user?.email}</span>
             <button

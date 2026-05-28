@@ -12,6 +12,7 @@ import {
   Loader2,
   Play,
   GitBranch,
+  Shuffle,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -104,10 +105,25 @@ export function LibraryPage() {
             onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
-        <Button onClick={() => setModalOpen(true)} className="shrink-0">
-          <Link2 size={14} className="mr-1" />
-          Save Link
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (entries.length > 0) {
+                const random = entries[Math.floor(Math.random() * entries.length)];
+                setSelectedEntry(random);
+              }
+            }}
+            disabled={entries.length === 0}
+          >
+            <Shuffle size={14} className="mr-1" />
+            Random
+          </Button>
+          <Button onClick={() => setModalOpen(true)}>
+            <Link2 size={14} className="mr-1" />
+            Save Link
+          </Button>
+        </div>
       </div>
 
       {/* Section filter */}
