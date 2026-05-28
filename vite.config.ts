@@ -5,7 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/',
+  base: process.env.DASHBOARD_BASE || '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
