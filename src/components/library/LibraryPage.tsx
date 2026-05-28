@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Loader2,
   Play,
   GitBranch,
   Shuffle,
@@ -28,7 +27,6 @@ import { LinkCaptureModal } from "./LinkCaptureModal";
 import { EntryDetailModal } from "./EntryDetailModal";
 import { PullIndicator } from "@/components/ui/PullIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-
 function platformIcon(source_url?: string) {
   if (!source_url) return null;
   if (source_url.includes("youtube.com") || source_url.includes("youtu.be")) {
@@ -39,7 +37,6 @@ function platformIcon(source_url?: string) {
   }
   return <Globe size={14} className="text-muted" />;
 }
-
 export function LibraryPage() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
@@ -50,7 +47,6 @@ export function LibraryPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
   const { data, loading, refetch } = useLibraryEntries({
     search: search || undefined,
     section: section || undefined,
@@ -58,38 +54,31 @@ export function LibraryPage() {
     page,
     per_page: perPage,
   });
-
   const { sections } = useLibrarySections();
   const { tags: allTags } = useLibraryTags();
   const { pullDistance } = usePullToRefresh(refetch);
-
   const entries = data?.entries ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / perPage) || 1;
-
   const handleRefetch = useCallback(() => {
     setPage(1);
     refetch();
   }, [refetch]);
-
   // Debounce search input
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput), 300);
     return () => clearTimeout(timeout);
   }, [searchInput]);
-
   // Listen for keyboard shortcut to focus search
   useEffect(() => {
     const handler = () => searchInputRef.current?.focus();
     window.addEventListener("focus-library-search", handler);
     return () => window.removeEventListener("focus-library-search", handler);
   }, []);
-
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [search, section, tag]);
-
   return (
     <div className="space-y-4">
       <PullIndicator distance={pullDistance} />
@@ -125,7 +114,6 @@ export function LibraryPage() {
           </Button>
         </div>
       </div>
-
       {/* Section filter */}
       <div className="flex flex-wrap gap-2">
         <button
@@ -152,7 +140,6 @@ export function LibraryPage() {
           </button>
         ))}
       </div>
-
       {/* Tag filter */}
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -177,17 +164,34 @@ export function LibraryPage() {
           ))}
         </div>
       )}
-
       {/* Entries grid */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 size={24} className="animate-spin text-accent" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="h-4 w-3/4 rounded shimmer" />
+              <div className="h-3 w-1/2 rounded shimmer" />
+              <div className="flex gap-2">
+                <div className="h-6 w-16 rounded-full shimmer" />
+                <div className="h-6 w-12 rounded-full shimmer" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : entries.length === 0 ? (
-        <Card className="py-12 text-center">
-          <BookOpen size={32} className="mx-auto mb-3 text-muted opacity-40" />
-          <p className="text-muted">No entries found.</p>
-        </Card>
+        <div className="py-16 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface">
+            <BookOpen size={28} className="text-accent/60" />
+          </div>
+          <h3 className="mb-1 text-lg font-semibold">Your library is empty</h3>
+          <p className="mb-4 text-sm text-muted">Start building your knowledge base by saving your first link or note.</p>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="rounded-lg bg-accent px-4 py-2 text-sm text-white transition-opacity hover:opacity-90"
+          >
+            Save Your First Link
+          </button>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((entry) => (
@@ -211,13 +215,11 @@ export function LibraryPage() {
                   </a>
                 )}
               </div>
-
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {platformIcon(entry.source_url)}
                 <Badge variant="default">{entry.section}</Badge>
                 <Badge variant="accent">{entry.status}</Badge>
               </div>
-
               {entry.tags.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {entry.tags.slice(0, 4).map((t) => (
@@ -228,7 +230,6 @@ export function LibraryPage() {
                   ))}
                 </div>
               )}
-
               <div className="mt-2 flex items-center gap-1 text-xs text-muted">
                 <Clock size={10} />
                 {entry.captured_at}
@@ -237,7 +238,6 @@ export function LibraryPage() {
           ))}
         </div>
       )}
-
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
@@ -262,13 +262,11 @@ export function LibraryPage() {
           </Button>
         </div>
       )}
-
       <EntryDetailModal
         entry={selectedEntry}
         onClose={() => setSelectedEntry(null)}
         onUpdated={handleRefetch}
       />
-
       <LinkCaptureModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
