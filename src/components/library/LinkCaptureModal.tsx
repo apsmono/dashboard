@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { X, Link2, Loader2, AlertCircle, CheckCircle, Globe, Play, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -33,7 +33,7 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
 
   const { state: previewState, fetchPreview, reset: resetPreview } = useLinkPreview();
   const { isDuplicate, checking: checkingDup, check: checkDup, reset: resetDup } = useDuplicateCheck();
-  const { save, saving, error: saveError } = useSaveLink();
+  const { save, saving, error: saveError, reset: resetSave } = useSaveLink();
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -84,6 +84,19 @@ export function LinkCaptureModal({ open, onClose, onSaved }: LinkCaptureModalPro
   }, [url, tagsInput, status, save, onSaved, onClose]);
 
   const previewData = previewState.status === "success" ? previewState.data : null;
+
+  // Reset all state when modal is reopened
+  useEffect(() => {
+    if (open) {
+      setUrl("");
+      setTagsInput("");
+      setStatus("to-read");
+      setStep("input");
+      resetPreview();
+      resetDup();
+      resetSave();
+    }
+  }, [open, resetPreview, resetDup, resetSave]);
 
   if (!open) return null;
 

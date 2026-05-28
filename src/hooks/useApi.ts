@@ -304,7 +304,12 @@ export function useSaveLink() {
     }
   }, []);
 
-  return { save, saving, error };
+  const reset = useCallback(() => {
+    setSaving(false);
+    setError("");
+  }, []);
+
+  return { save, saving, error, reset };
 }
 
 // ---------------------------------------------------------------------------
