@@ -230,6 +230,7 @@ export function EntryDetailModal({ entry, onClose, onUpdated }: EntryDetailModal
         {activeTab === "ai" && displayEntry && (
           <EntryAIPanel
             key={displayEntry.id}
+            entryId={displayEntry.id}
             entryTitle={displayEntry.title}
             onAsk={handleAsk}
             answer={answer}

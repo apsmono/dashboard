@@ -3,6 +3,7 @@ import { Send, Loader2, Sparkles, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface EntryAIPanelProps {
+  entryId: string;
   entryTitle: string;
   onAsk: (query: string) => Promise<void>;
   answer: string;
@@ -22,10 +23,35 @@ interface ChatMessage {
   text: string;
 }
 
-export function EntryAIPanel({ entryTitle, onAsk, answer, loading, error }: EntryAIPanelProps) {
+const STORAGE_KEY = (id: string) => `dashboard:chat:${id}`;
+
+function loadHistory(entryId: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(entryId));
+    if (raw) return JSON.parse(raw) as ChatMessage[];
+  } catch {
+    // ignore parse errors
+  }
+  return [];
+}
+
+function saveHistory(entryId: string, history: ChatMessage[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY(entryId), JSON.stringify(history));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function EntryAIPanel({ entryId, entryTitle, onAsk, answer, loading, error }: EntryAIPanelProps) {
   const [query, setQuery] = useState("");
-  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [history, setHistory] = useState<ChatMessage[]>(() => loadHistory(entryId));
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Persist history on every change
+  useEffect(() => {
+    saveHistory(entryId, history);
+  }, [entryId, history]);
 
   // When answer updates, add it to history
   useEffect(() => {
@@ -70,7 +96,8 @@ export function EntryAIPanel({ entryTitle, onAsk, answer, loading, error }: Entr
 
   const handleClear = useCallback(() => {
     setHistory([]);
-  }, []);
+    localStorage.removeItem(STORAGE_KEY(entryId));
+  }, [entryId]);
 
   return (
     <div className="flex flex-col gap-3">
