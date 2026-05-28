@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  apiKey: "AIzaSyA5yXdwtKlmRV_p_4wY6oXZYCRq1ISmUyw",
   authDomain: "apsmono-projects.firebaseapp.com",
   projectId: "apsmono-projects",
   storageBucket: "apsmono-projects.firebasestorage.app",

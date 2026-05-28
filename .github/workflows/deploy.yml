@@ -30,7 +30,6 @@ jobs:
 
       - name: Build
         env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           VITE_API_BASE: ${{ secrets.API_BASE || 'https://macmini.local:8000' }}
         run: bun run build
 
