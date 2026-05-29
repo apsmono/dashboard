@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
+import { useOfflineCache } from "./useOfflineCache";
 import {
   apiGet,
   apiPost,
   apiDelete,
+  isOfflineError,
   fetchLibraryEntries,
   fetchLibraryEntry,
   fetchLibrarySections,
@@ -32,6 +34,7 @@ import {
   deleteHabit,
   updateGoal,
 } from "@/lib/api";
+import { queueMutation } from "@/lib/offline";
 import type {
   DashboardStats,
   Command,
@@ -46,28 +49,13 @@ import type {
 // ---------------------------------------------------------------------------
 
 export function useDashboardStats() {
-  const [data, setData] = useState<DashboardStats | null>(null);
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const { data, error, loading, isStale, refetch } = useOfflineCache<DashboardStats>(
+    "dashboard-stats",
+    () => apiGet<DashboardStats>("/api/v1/dashboard/stats"),
+    []
+  );
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const stats = await apiGet<DashboardStats>("/api/v1/dashboard/stats");
-      setData(stats);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load stats");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, error, loading, refetch: fetchData };
+  return { data, error: isStale ? "" : error, loading, refetch, isStale };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,13 +204,28 @@ export function useReminders() {
   }, []);
 
   const createReminder = useCallback(async (message: string, runAt: string) => {
-    await apiPost("/api/v1/reminders", { message, run_at: runAt });
-    await fetchReminders();
+    const payload = { message, run_at: runAt };
+    try {
+      await apiPost("/api/v1/reminders", payload);
+      await fetchReminders();
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: "/api/v1/reminders", method: "POST", payload });
+      }
+      throw e;
+    }
   }, [fetchReminders]);
 
   const deleteReminder = useCallback(async (id: string) => {
-    await apiDelete(`/api/v1/reminders/${encodeURIComponent(id)}`);
-    await fetchReminders();
+    try {
+      await apiDelete(`/api/v1/reminders/${encodeURIComponent(id)}`);
+      await fetchReminders();
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/reminders/${encodeURIComponent(id)}`, method: "DELETE", payload: {} });
+      }
+      throw e;
+    }
   }, [fetchReminders]);
 
   useEffect(() => {
@@ -686,21 +689,42 @@ export function useTasks(filters?: { status?: string; goal_id?: string; project_
   }, [fetchData]);
 
   const create = useCallback(async (payload: Parameters<typeof createTask>[0]) => {
-    const res = await createTask(payload);
-    await fetchData();
-    return res;
+    try {
+      const res = await createTask(payload);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: "/api/v1/planning/tasks", method: "POST", payload });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   const update = useCallback(async (taskId: string, payload: Parameters<typeof updateTask>[1]) => {
-    const res = await updateTask(taskId, payload);
-    await fetchData();
-    return res;
+    try {
+      const res = await updateTask(taskId, payload);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/planning/tasks/${taskId}`, method: "PUT", payload });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   const remove = useCallback(async (taskId: string) => {
-    const res = await deleteTask(taskId);
-    await fetchData();
-    return res;
+    try {
+      const res = await deleteTask(taskId);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/planning/tasks/${taskId}`, method: "DELETE", payload: {} });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData, create, update, remove };
@@ -734,27 +758,55 @@ export function useHabits() {
   }, [fetchData]);
 
   const create = useCallback(async (payload: Parameters<typeof createHabit>[0]) => {
-    const res = await createHabit(payload);
-    await fetchData();
-    return res;
+    try {
+      const res = await createHabit(payload);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: "/api/v1/planning/habits", method: "POST", payload });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   const checkin = useCallback(async (habitId: string) => {
-    const res = await checkinHabit(habitId);
-    await fetchData();
-    return res;
+    try {
+      const res = await checkinHabit(habitId);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/planning/habits/${habitId}/checkin`, method: "PUT", payload: {} });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   const uncheckin = useCallback(async (habitId: string) => {
-    const res = await uncheckinHabit(habitId);
-    await fetchData();
-    return res;
+    try {
+      const res = await uncheckinHabit(habitId);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/planning/habits/${habitId}/uncheckin`, method: "PUT", payload: {} });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   const remove = useCallback(async (habitId: string) => {
-    const res = await deleteHabit(habitId);
-    await fetchData();
-    return res;
+    try {
+      const res = await deleteHabit(habitId);
+      await fetchData();
+      return res;
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueMutation({ endpoint: `/api/v1/planning/habits/${habitId}`, method: "DELETE", payload: {} });
+      }
+      throw e;
+    }
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData, create, checkin, uncheckin, remove };

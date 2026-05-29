@@ -2,11 +2,13 @@ import { WidgetCard } from "@/components/ui/WidgetCard";
 import { useDashboardStats, useGoals, useCommands, useTimeline, useTasks, useHabits } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
-  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock,
+  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame,
   GripVertical, ArrowUp, ArrowDown, Check, Circle, Plus, Trash2, Calendar
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { sendCommand } from "@/lib/api";
+import { GamificationBadges } from "./GamificationBadges";
+import { XPBar } from "./XPBar";
 
 const statIcons: Record<string, React.ReactNode> = {
   profile: <User size={18} />,
@@ -274,47 +276,6 @@ function StreakCounter() {
           <div className="text-3xl font-bold text-text">{total}</div>
           <div className="text-[10px] uppercase tracking-wide text-muted">Total</div>
         </div>
-      </div>
-    </WidgetCard>
-  );
-}
-
-function GamificationBadges() {
-  const { data: stats } = useDashboardStats();
-  const { current: streak } = useStreakData();
-  const library = stats?.library;
-  const totalEntries = library
-    ? Object.values(library).reduce((a, b) => a + (b as number), 0)
-    : 0;
-
-  const badges = [
-    { id: "first", label: "First Capture", desc: "Save your first entry", unlocked: totalEntries >= 1, icon: <Zap size={16} /> },
-    { id: "collector", label: "Collector", desc: "10+ entries", unlocked: totalEntries >= 10, icon: <BookOpen size={16} /> },
-    { id: "librarian", label: "Librarian", desc: "50+ entries", unlocked: totalEntries >= 50, icon: <BookOpen size={16} /> },
-    { id: "diverse", label: "Explorer", desc: "3+ sections", unlocked: library && Object.values(library).filter((v) => (v as number) > 0).length >= 3, icon: <Target size={16} /> },
-    { id: "streaker", label: "Streaker", desc: "7-day streak", unlocked: streak >= 7, icon: <Flame size={16} /> },
-    { id: "master", label: "Master", desc: "100+ entries", unlocked: totalEntries >= 100, icon: <Trophy size={16} /> },
-  ];
-
-  const unlockedCount = badges.filter((b) => b.unlocked).length;
-
-  return (
-    <WidgetCard title={`Achievements ${unlockedCount}/${badges.length}`} icon={<Trophy size={18} />} className="col-span-1 sm:col-span-2">
-      <div className="grid grid-cols-3 gap-2">
-        {badges.map((b) => (
-          <div
-            key={b.id}
-            title={b.desc}
-            className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${
-              b.unlocked
-                ? "border-accent/30 bg-accent/5 text-accent"
-                : "border-border bg-card text-muted opacity-60"
-            }`}
-          >
-            {b.unlocked ? b.icon : <Lock size={14} />}
-            <span className="text-[10px] font-medium text-center leading-tight">{b.label}</span>
-          </div>
-        ))}
       </div>
     </WidgetCard>
   );
@@ -592,6 +553,7 @@ const DEFAULT_WIDGET_ORDER = [
   "task-manager",
   "habit-tracker",
   "streak",
+  "xp-bar",
   "library-stats",
   "achievements",
   "health",
@@ -606,6 +568,7 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
   "task-manager": TaskManager,
   "habit-tracker": HabitTracker,
   "streak": StreakCounter,
+  "xp-bar": XPBar,
   "library-stats": LibraryStats,
   "achievements": GamificationBadges,
   "health": IntegrationHealth,

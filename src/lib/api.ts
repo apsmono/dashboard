@@ -1,5 +1,8 @@
 import { getIdToken } from "./firebase";
+import { isOfflineError as _isOfflineError } from "./offline";
 import type { LibraryListResponse, LibraryEntry } from "@/types";
+
+export { _isOfflineError as isOfflineError };
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.apsmono.com";
 

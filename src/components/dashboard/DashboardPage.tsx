@@ -1,8 +1,9 @@
-import { useState, Suspense, lazy, useCallback } from "react";
+import { useState, Suspense, lazy, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useViewMode } from "@/hooks/useViewMode";
+import { useMutationQueue } from "@/hooks/useMutationQueue";
 import { NavTabs } from "./NavTabs";
 import { Toolbar } from "./Toolbar";
 import { Overview } from "./Overview";
@@ -12,9 +13,10 @@ import { CommandInput } from "./CommandInput";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardCheatsheet } from "./KeyboardCheatsheet";
 import { sendCommand } from "@/lib/api";
+import { flushMutationQueue } from "@/lib/sync";
 import {
   LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send, Search,
-  GitBranch, Calendar, BarChart3, Terminal, Bell, MoreHorizontal, X
+  GitBranch, Calendar, CalendarDays, BarChart3, Terminal, Bell, MoreHorizontal, X
 } from "lucide-react";
 
 const LibraryPage = lazy(() => import("@/components/library/LibraryPage").then((m) => ({ default: m.LibraryPage })));
@@ -22,6 +24,7 @@ const GraphPage = lazy(() => import("@/components/graph/GraphPage").then((m) => 
 const TimelinePage = lazy(() => import("@/components/timeline/TimelinePage").then((m) => ({ default: m.TimelinePage })));
 const AnalysisPage = lazy(() => import("@/components/analysis/AnalysisPage").then((m) => ({ default: m.AnalysisPage })));
 const PlanningPage = lazy(() => import("@/components/planning/PlanningPage").then((m) => ({ default: m.PlanningPage })));
+const CalendarPage = lazy(() => import("@/components/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage })));
 
 const MOBILE_TABS = [
   { id: "overview", label: "Home", icon: LayoutDashboard },
@@ -33,6 +36,7 @@ const MOBILE_TABS = [
 const MORE_TABS = [
   { id: "graph", label: "Graph", icon: GitBranch },
   { id: "timeline", label: "Timeline", icon: Calendar },
+  { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "analysis", label: "Analysis", icon: BarChart3 },
   { id: "commands", label: "Commands", icon: Terminal },
   { id: "reminders", label: "Reminders", icon: Bell },
@@ -43,8 +47,15 @@ export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [moreOpen, setMoreOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
-  const isOnline = useOnlineStatus();
+  const { isOnline, resetWasOffline } = useOnlineStatus();
+  const { count: pendingCount, refresh: refreshQueue } = useMutationQueue();
   const { viewMode } = useViewMode();
+
+  // Refresh queue count periodically
+  useEffect(() => {
+    const interval = setInterval(refreshQueue, 2000);
+    return () => clearInterval(interval);
+  }, [refreshQueue]);
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
@@ -78,10 +89,32 @@ export function DashboardPage() {
     <div className="min-h-screen bg-bg text-text">
       <div className="mx-auto max-w-5xl px-4 py-6">
         {/* Offline indicator */}
-        {!isOnline && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning bg-warning/10 px-3 py-2 text-sm text-warning">
+        {(!isOnline || pendingCount > 0) && (
+          <div className={`mb-4 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+            !isOnline
+              ? "border-warning bg-warning/10 text-warning"
+              : "border-success bg-success/10 text-success"
+          }`}>
             <WifiOff size={14} />
-            You are offline. Some features may not work.
+            <span className="flex-1">
+              {!isOnline
+                ? `You are offline. ${pendingCount > 0 ? `${pendingCount} change${pendingCount > 1 ? "s" : ""} queued.` : "Some features may not work."}`
+                : `${pendingCount} change${pendingCount > 1 ? "s" : ""} queued. Ready to sync.`}
+            </span>
+            {isOnline && pendingCount > 0 && (
+              <button
+                onClick={async () => {
+                  await flushMutationQueue();
+                  refreshQueue();
+                  resetWasOffline();
+                  // Refresh current tab data
+                  window.dispatchEvent(new CustomEvent("brain-command-sent"));
+                }}
+                className="rounded-md bg-warning px-2 py-0.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Sync now
+              </button>
+            )}
           </div>
         )}
 
@@ -130,6 +163,7 @@ export function DashboardPage() {
           {activeTab === "timeline" && <TimelinePage />}
           {activeTab === "analysis" && <AnalysisPage />}
           {activeTab === "planning" && <PlanningPage />}
+          {activeTab === "calendar" && <CalendarPage />}
           {activeTab === "commands" && <Commands />}
           {activeTab === "reminders" && <Reminders />}
           {activeTab === "cmd" && <CommandInput />}

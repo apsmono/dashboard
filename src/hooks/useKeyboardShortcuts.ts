@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const TAB_ORDER = ["overview", "library", "graph", "timeline", "analysis", "planning"];
+const TAB_ORDER = ["overview", "library", "graph", "timeline", "analysis", "planning", "calendar"];
 
 export function useKeyboardShortcuts(
   activeTab: string,

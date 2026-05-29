@@ -82,3 +82,30 @@ export interface LibraryFilters {
   page?: number;
   per_page?: number;
 }
+
+export interface BadgeDefinition {
+  id: string;
+  label: string;
+  desc: string;
+  xpBonus: number;
+  unlocked: boolean;
+  icon?: string;
+}
+
+export interface LevelDefinition {
+  level: number;
+  minXp: number;
+  label: string;
+}
+
+export interface GamificationState {
+  xp: number;
+  level: number;
+  xpToNext: number;
+  progressPercent: number;
+  totalEntries: number;
+  currentStreak: number;
+  badges: BadgeDefinition[];
+  unlockedCount: number;
+  totalCount: number;
+}

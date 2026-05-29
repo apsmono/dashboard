@@ -14,6 +14,7 @@ import {
   X,
   History,
   Trash2,
+  CalendarDays,
 } from "lucide-react";
 import { fetchLibraryEntries } from "@/lib/api";
 import type { LibraryEntry } from "@/types";
@@ -223,6 +224,10 @@ export function CommandPalette({ onNavigate, onCommand }: CommandPaletteProps) {
               <Command.Item onSelect={() => navigate("analysis")}>
                 <Activity size={14} className="mr-2 text-muted" />
                 <span>Analysis</span>
+              </Command.Item>
+              <Command.Item onSelect={() => navigate("calendar")}>
+                <CalendarDays size={14} className="mr-2 text-muted" />
+                <span>Calendar</span>
               </Command.Item>
             </Command.Group>
 
