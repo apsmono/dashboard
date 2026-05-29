@@ -6,7 +6,8 @@ export function useKeyboardShortcuts(
   activeTab: string,
   onChangeTab: (tab: string) => void,
   onFocusSearch?: () => void,
-  onCloseModal?: () => void
+  onCloseModal?: () => void,
+  onShowCheatsheet?: () => void,
 ) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -43,6 +44,13 @@ export function useKeyboardShortcuts(
         return;
       }
 
+      // ? shows keyboard cheatsheet
+      if (e.key === "?") {
+        e.preventDefault();
+        onShowCheatsheet?.();
+        return;
+      }
+
       // Escape closes modals
       if (e.key === "Escape" && onCloseModal) {
         onCloseModal();
@@ -51,5 +59,5 @@ export function useKeyboardShortcuts(
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [activeTab, onChangeTab, onFocusSearch, onCloseModal]);
+  }, [activeTab, onChangeTab, onFocusSearch, onCloseModal, onShowCheatsheet]);
 }

@@ -10,6 +10,7 @@ import { Commands } from "./Commands";
 import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
 import { CommandPalette } from "@/components/CommandPalette";
+import { KeyboardCheatsheet } from "./KeyboardCheatsheet";
 import { sendCommand } from "@/lib/api";
 import {
   LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send, Search,
@@ -41,6 +42,7 @@ export function DashboardPage() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
   const isOnline = useOnlineStatus();
   const { viewMode } = useViewMode();
 
@@ -53,7 +55,7 @@ export function DashboardPage() {
     window.dispatchEvent(new CustomEvent("focus-library-search"));
   }, []);
 
-  useKeyboardShortcuts(activeTab, handleTabChange, focusSearch);
+  useKeyboardShortcuts(activeTab, handleTabChange, focusSearch, undefined, () => setCheatsheetOpen(true));
 
   if (loading) {
     return (
@@ -132,6 +134,12 @@ export function DashboardPage() {
           {activeTab === "reminders" && <Reminders />}
           {activeTab === "cmd" && <CommandInput />}
         </Suspense>
+
+        {/* Keyboard shortcuts cheatsheet */}
+        <KeyboardCheatsheet
+          open={cheatsheetOpen}
+          onClose={() => setCheatsheetOpen(false)}
+        />
       </div>
 
       {/* Mobile bottom nav */}
