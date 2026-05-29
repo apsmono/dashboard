@@ -25,6 +25,11 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  fetchHabits,
+  createHabit,
+  checkinHabit,
+  uncheckinHabit,
+  deleteHabit,
 } from "@/lib/api";
 import type {
   DashboardStats,
@@ -692,4 +697,58 @@ export function useTasks(filters?: { status?: string; goal_id?: string; project_
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData, create, update, remove };
+}
+
+// ---------------------------------------------------------------------------
+// Habits
+// ---------------------------------------------------------------------------
+
+export function useHabits() {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchHabits>> | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetchHabits();
+      setData(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const create = useCallback(async (payload: Parameters<typeof createHabit>[0]) => {
+    const res = await createHabit(payload);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  const checkin = useCallback(async (habitId: string) => {
+    const res = await checkinHabit(habitId);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  const uncheckin = useCallback(async (habitId: string) => {
+    const res = await uncheckinHabit(habitId);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  const remove = useCallback(async (habitId: string) => {
+    const res = await deleteHabit(habitId);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  return { data, error, loading, refetch: fetchData, create, checkin, uncheckin, remove };
 }

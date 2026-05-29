@@ -369,6 +369,55 @@ export async function deleteTask(taskId: string): Promise<{ status: string; id: 
   return apiDelete<{ status: string; id: string }>(`/api/v1/planning/tasks/${taskId}`);
 }
 
+// ---------------------------------------------------------------------------
+// Habits
+// ---------------------------------------------------------------------------
+
+export interface Habit {
+  id: string;
+  name: string;
+  frequency: string;
+  color: string | null;
+  created_at: string | null;
+  checkins: string[];
+  streak: number;
+  checked_today: boolean;
+  path: string;
+}
+
+export interface HabitsResponse {
+  habits: Habit[];
+  active: Habit[];
+  total_checkins: number;
+  longest_streak: number;
+}
+
+export interface HabitCreatePayload {
+  name: string;
+  frequency?: string;
+  color?: string | null;
+}
+
+export async function fetchHabits(): Promise<HabitsResponse> {
+  return apiGet<HabitsResponse>("/api/v1/planning/habits");
+}
+
+export async function createHabit(payload: HabitCreatePayload): Promise<Habit & { status: string }> {
+  return apiPost<Habit & { status: string }>("/api/v1/planning/habits", payload);
+}
+
+export async function checkinHabit(habitId: string): Promise<Habit & { status: string }> {
+  return apiPut<Habit & { status: string }>(`/api/v1/planning/habits/${habitId}/checkin`, {});
+}
+
+export async function uncheckinHabit(habitId: string): Promise<Habit & { status: string }> {
+  return apiPut<Habit & { status: string }>(`/api/v1/planning/habits/${habitId}/uncheckin`, {});
+}
+
+export async function deleteHabit(habitId: string): Promise<{ status: string; id: string }> {
+  return apiDelete<{ status: string; id: string }>(`/api/v1/planning/habits/${habitId}`);
+}
+
 export async function fetchGoals(): Promise<PlanningGoals> {
   return apiGet<PlanningGoals>("/api/v1/planning/goals");
 }
