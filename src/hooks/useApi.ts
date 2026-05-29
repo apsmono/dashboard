@@ -30,6 +30,7 @@ import {
   checkinHabit,
   uncheckinHabit,
   deleteHabit,
+  updateGoal,
 } from "@/lib/api";
 import type {
   DashboardStats,
@@ -596,7 +597,13 @@ export function useGoals() {
     fetchData();
   }, [fetchData]);
 
-  return { data, error, loading, refetch: fetchData };
+  const update = useCallback(async (goalId: string, payload: Parameters<typeof updateGoal>[1]) => {
+    const res = await updateGoal(goalId, payload);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  return { data, error, loading, refetch: fetchData, update };
 }
 
 export function useProjects() {

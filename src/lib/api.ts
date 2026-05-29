@@ -273,11 +273,18 @@ export interface PlanningEntry {
   preview: string;
 }
 
+export interface GoalEntry extends PlanningEntry {
+  parent_id: string | null;
+  progress: number;
+  children?: GoalEntry[];
+}
+
 export interface PlanningGoals {
-  goals: PlanningEntry[];
-  active: PlanningEntry[];
-  completed: PlanningEntry[];
-  paused: PlanningEntry[];
+  goals: GoalEntry[];
+  tree: GoalEntry[];
+  active: GoalEntry[];
+  completed: GoalEntry[];
+  paused: GoalEntry[];
 }
 
 export interface PlanningProjects {
@@ -420,6 +427,17 @@ export async function deleteHabit(habitId: string): Promise<{ status: string; id
 
 export async function fetchGoals(): Promise<PlanningGoals> {
   return apiGet<PlanningGoals>("/api/v1/planning/goals");
+}
+
+export interface GoalUpdatePayload {
+  title?: string;
+  status?: string;
+  parent_id?: string | null;
+  progress?: number;
+}
+
+export async function updateGoal(goalId: string, payload: GoalUpdatePayload): Promise<GoalEntry & { status: string }> {
+  return apiPut<GoalEntry & { status: string }>(`/api/v1/planning/goals/${goalId}`, payload);
 }
 
 export async function fetchProjects(): Promise<PlanningProjects> {

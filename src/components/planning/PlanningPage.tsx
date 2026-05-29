@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight, ListTodo, Plus, Trash2, Calendar, Flame, Check } from "lucide-react";
+import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight, ListTodo, Plus, Trash2, Calendar, Flame, Check, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -15,8 +15,127 @@ interface ReviewData {
   recent_count: number;
 }
 
+interface GoalNode {
+  id: string;
+  title: string;
+  status: string;
+  progress: number;
+  parent_id: string | null;
+  children?: GoalNode[];
+}
+
+function GoalTreeCard({
+  goalsData,
+  updateGoal,
+}: {
+  goalsData: { tree: GoalNode[]; goals: GoalNode[] } | null;
+  updateGoal: (id: string, payload: { status?: string; progress?: number }) => Promise<unknown>;
+}) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const statusIcon = (status: string) => {
+    switch (status) {
+      case "completed": return <CheckCircle2 size={14} className="text-muted shrink-0" />;
+      case "paused": return <Pause size={14} className="text-muted shrink-0" />;
+      default: return <Circle size={14} className="text-success shrink-0" />;
+    }
+  };
+
+  const progressColor = (progress: number) => {
+    if (progress >= 80) return "bg-success";
+    if (progress >= 50) return "bg-accent";
+    if (progress >= 20) return "bg-warning";
+    return "bg-danger";
+  };
+
+  const renderNode = (node: GoalNode, depth = 0) => {
+    const hasChildren = node.children && node.children.length > 0;
+    const isExpanded = expanded.has(node.id);
+
+    return (
+      <div key={node.id}>
+        <div
+          className={`flex items-center gap-2 rounded-lg bg-surface px-3 py-2 ${node.status === "completed" ? "opacity-50" : ""} ${depth > 0 ? "ml-4 border-l border-border" : ""}`}
+        >
+          {hasChildren && (
+            <button
+              onClick={() => toggleExpand(node.id)}
+              className="shrink-0 text-muted hover:text-text transition-colors"
+            >
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+          )}
+          {!hasChildren && <span className="w-[14px] shrink-0" />}
+          {statusIcon(node.status)}
+          <span className={`flex-1 text-sm ${node.status === "completed" ? "line-through" : ""}`}>
+            {node.title}
+          </span>
+          {/* Progress bar */}
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-16 rounded-full bg-border overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${progressColor(node.progress)}`}
+                style={{ width: `${node.progress}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted w-6 text-right">{node.progress}%</span>
+          </div>
+          <button
+            onClick={() => {
+              const nextStatus = node.status === "active" ? "completed" : "active";
+              updateGoal(node.id, { status: nextStatus, progress: nextStatus === "completed" ? 100 : 0 });
+            }}
+            className="text-[10px] text-muted hover:text-text transition-colors"
+            title="Toggle status"
+          >
+            {node.status === "completed" ? "Reopen" : "Done"}
+          </button>
+        </div>
+        {hasChildren && isExpanded && (
+          <div className="mt-1 space-y-1">
+            {node.children!.map((child) => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Card>
+      <CardTitle className="flex items-center gap-2">
+        <Target size={16} className="text-accent" />
+        Goals
+        {goalsData?.goals && goalsData.goals.length > 0 && (
+          <Badge variant="accent" className="text-[10px]">
+            {goalsData.goals.length} total
+          </Badge>
+        )}
+      </CardTitle>
+      <div className="space-y-1">
+        {goalsData?.tree && goalsData.tree.length > 0 ? (
+          goalsData.tree.map((root) => renderNode(root))
+        ) : goalsData?.goals && goalsData.goals.length > 0 ? (
+          // Fallback: flat list if tree is empty but goals exist
+          goalsData.goals.map((g) => renderNode(g))
+        ) : (
+          <p className="text-sm text-muted">No goals yet.</p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function PlanningPage() {
-  const { data: goalsData, loading: goalsLoading } = useGoals();
+  const { data: goalsData, loading: goalsLoading, update: updateGoal } = useGoals();
   const { data: projectsData, loading: projectsLoading } = useProjects();
   const { data: focusData, loading: focusLoading } = useFocusSuggestions();
   const { data: tasksData, loading: tasksLoading, create: createTask, update: updateTask, remove: deleteTask } = useTasks();
@@ -277,44 +396,7 @@ export function PlanningPage() {
       </Card>
 
       {/* Goals */}
-      <Card>
-        <CardTitle className="flex items-center gap-2">
-          <Target size={16} className="text-accent" />
-          Goals
-        </CardTitle>
-        <div className="space-y-2">
-          {goalsData?.active.map((g) => (
-            <div key={g.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2">
-              <Circle size={14} className="text-success" />
-              <span className="text-sm">{g.title}</span>
-              <Badge variant="success" className="ml-auto text-[10px]">
-                active
-              </Badge>
-            </div>
-          ))}
-          {goalsData?.paused.map((g) => (
-            <div key={g.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 opacity-60">
-              <Pause size={14} className="text-muted" />
-              <span className="text-sm">{g.title}</span>
-              <Badge variant="default" className="ml-auto text-[10px]">
-                {g.status}
-              </Badge>
-            </div>
-          ))}
-          {goalsData?.completed.map((g) => (
-            <div key={g.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 opacity-50">
-              <CheckCircle2 size={14} className="text-muted" />
-              <span className="text-sm line-through">{g.title}</span>
-              <Badge variant="default" className="ml-auto text-[10px]">
-                done
-              </Badge>
-            </div>
-          ))}
-          {(!goalsData || goalsData.goals.length === 0) && (
-            <p className="text-sm text-muted">No goals yet.</p>
-          )}
-        </div>
-      </Card>
+      <GoalTreeCard goalsData={goalsData} updateGoal={updateGoal} />
 
       {/* Projects */}
       <Card>
