@@ -37,6 +37,31 @@ function platformIcon(source_url?: string) {
   }
   return <Globe size={14} className="text-muted" />;
 }
+
+function youtubeThumbnail(source_url?: string): string | null {
+  if (!source_url) return null;
+  let videoId: string | null = null;
+  if (source_url.includes("youtube.com/watch")) {
+    const url = new URL(source_url);
+    videoId = url.searchParams.get("v");
+  } else if (source_url.includes("youtu.be/")) {
+    videoId = source_url.split("youtu.be/")[1]?.split("?")[0];
+  }
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+}
+
+function sectionAccentColor(section: string): string {
+  const colors: Record<string, string> = {
+    profile: "border-l-blue-500",
+    terms: "border-l-purple-500",
+    books: "border-l-amber-500",
+    articles: "border-l-emerald-500",
+    thoughts: "border-l-pink-500",
+    references: "border-l-cyan-500",
+  };
+  return colors[section] || "border-l-accent";
+}
 export function LibraryPage() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
@@ -197,9 +222,25 @@ export function LibraryPage() {
           {entries.map((entry) => (
             <Card
               key={entry.id}
-              className="cursor-pointer transition-shadow hover:shadow-md"
+              className={`cursor-pointer transition-shadow hover:shadow-md border-l-4 ${sectionAccentColor(entry.section)}`}
               onClick={() => setSelectedEntry(entry)}
             >
+              {/* YouTube thumbnail */}
+              {(() => {
+                const thumb = youtubeThumbnail(entry.source_url);
+                if (!thumb) return null;
+                return (
+                  <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-xl">
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="h-32 w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                );
+              })()}
               <div className="flex items-start justify-between gap-2">
                 <h4 className="text-sm font-semibold line-clamp-2">{entry.title}</h4>
                 {entry.source_url && (
