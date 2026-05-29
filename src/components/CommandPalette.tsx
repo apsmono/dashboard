@@ -12,9 +12,27 @@ import {
   Clock,
   Hash,
   X,
+  History,
+  Trash2,
 } from "lucide-react";
 import { fetchLibraryEntries } from "@/lib/api";
 import type { LibraryEntry } from "@/types";
+
+const RECENT_SEARCHES_KEY = "cmdk:recent-searches";
+const MAX_RECENT = 5;
+
+function loadRecentSearches(): string[] {
+  try {
+    const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearches(searches: string[]) {
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(searches.slice(0, MAX_RECENT)));
+}
 
 interface CommandPaletteProps {
   onNavigate: (tab: string) => void;
@@ -26,6 +44,7 @@ export function CommandPalette({ onNavigate, onCommand }: CommandPaletteProps) {
   const [search, setSearch] = useState("");
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(loadRecentSearches);
 
   const fetchEntries = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -62,6 +81,20 @@ export function CommandPalette({ onNavigate, onCommand }: CommandPaletteProps) {
     return () => clearTimeout(timer);
   }, [search, fetchEntries]);
 
+  const addRecentSearch = useCallback((q: string) => {
+    if (!q.trim()) return;
+    setRecentSearches((prev) => {
+      const next = [q.trim(), ...prev.filter((s) => s !== q.trim())].slice(0, MAX_RECENT);
+      saveRecentSearches(next);
+      return next;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+  }, []);
+
   const navigate = (tab: string) => {
     onNavigate(tab);
     setOpen(false);
@@ -72,6 +105,17 @@ export function CommandPalette({ onNavigate, onCommand }: CommandPaletteProps) {
     onCommand(text);
     setOpen(false);
     setSearch("");
+  };
+
+  const handleSelectEntry = (entry: LibraryEntry) => {
+    addRecentSearch(entry.title);
+    navigate(`library?entry=${entry.id}`);
+  };
+
+  const handleSelectSearch = (q: string) => {
+    addRecentSearch(q);
+    setSearch(q);
+    fetchEntries(q);
   };
 
   if (!open) return null;
@@ -102,12 +146,42 @@ export function CommandPalette({ onNavigate, onCommand }: CommandPaletteProps) {
               {loading ? "Searching..." : "No results found."}
             </Command.Empty>
 
+            {/* Recent searches */}
+            {!search.trim() && recentSearches.length > 0 && (
+              <Command.Group
+                heading={
+                  <div className="flex items-center justify-between">
+                    <span>Recent Searches</span>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="flex items-center gap-1 text-[10px] text-muted hover:text-danger transition-colors"
+                    >
+                      <Trash2 size={10} />
+                      Clear
+                    </button>
+                  </div>
+                }
+              >
+                {recentSearches.map((q) => (
+                  <Command.Item
+                    key={q}
+                    onSelect={() => handleSelectSearch(q)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <History size={14} className="text-muted shrink-0" />
+                      <span className="text-sm truncate">{q}</span>
+                    </div>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
             {entries.length > 0 && (
               <Command.Group heading="Library Entries">
                 {entries.map((entry) => (
                   <Command.Item
                     key={entry.id}
-                    onSelect={() => navigate(`library?entry=${entry.id}`)}
+                    onSelect={() => handleSelectEntry(entry)}
                   >
                     <div className="flex items-center gap-2">
                       <BookOpen size={14} className="text-accent shrink-0" />
