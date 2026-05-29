@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight, ListTodo, Plus, Trash2, Calendar } from "lucide-react";
+import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight, ListTodo, Plus, Trash2, Calendar, Flame, Check } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useGoals, useProjects, useFocusSuggestions, useTasks } from "@/hooks/useApi";
+import { useGoals, useProjects, useFocusSuggestions, useTasks, useHabits } from "@/hooks/useApi";
 import { generateWeeklyReview } from "@/lib/api";
 
 interface ReviewData {
@@ -20,9 +20,12 @@ export function PlanningPage() {
   const { data: projectsData, loading: projectsLoading } = useProjects();
   const { data: focusData, loading: focusLoading } = useFocusSuggestions();
   const { data: tasksData, loading: tasksLoading, create: createTask, update: updateTask, remove: deleteTask } = useTasks();
+  const { data: habitsData, loading: habitsLoading, create: createHabit, checkin, uncheckin, remove: deleteHabit } = useHabits();
   const [review, setReview] = useState<ReviewData | null>(null);
   const [newTaskText, setNewTaskText] = useState("");
   const [addingTask, setAddingTask] = useState(false);
+  const [newHabitText, setNewHabitText] = useState("");
+  const [addingHabit, setAddingHabit] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
 
   const handleGenerateReview = async () => {
@@ -52,7 +55,26 @@ export function PlanningPage() {
     await updateTask(taskId, { status: currentStatus === "active" ? "completed" : "active" });
   };
 
-  const loading = goalsLoading || projectsLoading || focusLoading || tasksLoading;
+  const handleAddHabit = async () => {
+    if (!newHabitText.trim()) return;
+    setAddingHabit(true);
+    try {
+      await createHabit({ name: newHabitText.trim() });
+      setNewHabitText("");
+    } finally {
+      setAddingHabit(false);
+    }
+  };
+
+  const toggleHabitCheckin = async (habitId: string, checkedToday: boolean) => {
+    if (checkedToday) {
+      await uncheckin(habitId);
+    } else {
+      await checkin(habitId);
+    }
+  };
+
+  const loading = goalsLoading || projectsLoading || focusLoading || tasksLoading || habitsLoading;
 
   if (loading) {
     return (
@@ -184,6 +206,72 @@ export function PlanningPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Card>
+
+      {/* Habits */}
+      <Card>
+        <CardTitle className="flex items-center gap-2">
+          <Flame size={16} className="text-accent" />
+          Habits
+          {habitsData?.habits && habitsData.habits.length > 0 && (
+            <Badge variant="accent" className="text-[10px]">
+              {habitsData.total_checkins} check-ins
+            </Badge>
+          )}
+        </CardTitle>
+        {/* Add habit */}
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={newHabitText}
+            onChange={(e) => setNewHabitText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddHabit(); }}
+            placeholder="Track a new habit..."
+            className="flex-1 rounded-lg border border-border bg-input-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          />
+          <button
+            onClick={handleAddHabit}
+            disabled={addingHabit || !newHabitText.trim()}
+            className="flex items-center gap-1 rounded-lg bg-accent px-3 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {addingHabit ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            Add
+          </button>
+        </div>
+
+        {habitsLoading ? (
+          <div className="space-y-2">
+            <div className="h-8 rounded shimmer" />
+            <div className="h-8 rounded shimmer" />
+          </div>
+        ) : habitsData?.habits.length === 0 ? (
+          <p className="text-sm text-muted">No habits tracked yet. Add one above!</p>
+        ) : (
+          <div className="space-y-3">
+            {habitsData?.habits.map((habit) => (
+              <div key={habit.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 group">
+                <button
+                  onClick={() => toggleHabitCheckin(habit.id, habit.checked_today)}
+                  className={`shrink-0 transition-colors ${habit.checked_today ? "text-success" : "text-muted hover:text-success"}`}
+                  title={habit.checked_today ? "Checked in today" : "Check in"}
+                >
+                  {habit.checked_today ? <Check size={16} /> : <Circle size={16} />}
+                </button>
+                <span className="flex-1 text-sm">{habit.name}</span>
+                <span className={`text-xs font-medium ${habit.streak >= 7 ? "text-warning" : habit.streak >= 21 ? "text-accent" : "text-muted"}`}>
+                  {habit.streak}
+                  <Flame size={10} className="inline ml-0.5" />
+                </span>
+                <button
+                  onClick={() => deleteHabit(habit.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </Card>

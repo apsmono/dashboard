@@ -1,5 +1,5 @@
 import { WidgetCard } from "@/components/ui/WidgetCard";
-import { useDashboardStats, useGoals, useCommands, useTimeline, useTasks } from "@/hooks/useApi";
+import { useDashboardStats, useGoals, useCommands, useTimeline, useTasks, useHabits } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
   Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock,
@@ -492,11 +492,105 @@ function TaskManager() {
   );
 }
 
+function HabitTracker() {
+  const { data, loading, create, checkin, uncheckin, remove } = useHabits();
+  const [newHabit, setNewHabit] = useState("");
+  const [adding, setAdding] = useState(false);
+  const habits = data?.habits ?? [];
+
+  const handleAdd = async () => {
+    if (!newHabit.trim()) return;
+    setAdding(true);
+    try {
+      await create({ name: newHabit.trim() });
+      setNewHabit("");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const toggleCheckin = async (habit: { id: string; checked_today: boolean }) => {
+    if (habit.checked_today) {
+      await uncheckin(habit.id);
+    } else {
+      await checkin(habit.id);
+    }
+  };
+
+  const streakColor = (streak: number) => {
+    if (streak >= 21) return "text-accent";
+    if (streak >= 7) return "text-warning";
+    return "text-muted";
+  };
+
+  return (
+    <WidgetCard title={`Habits ${habits.length > 0 ? `(${habits.length})` : ""}`} icon={<Flame size={18} />} accent>
+      <div className="space-y-2">
+        {/* Add habit */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newHabit}
+            onChange={(e) => setNewHabit(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+            placeholder="Add a habit..."
+            className="flex-1 rounded-lg border border-border bg-input-bg px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={adding || !newHabit.trim()}
+            className="flex items-center rounded-lg bg-accent px-2.5 py-1.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {adding ? <Activity size={14} className="animate-spin" /> : <Plus size={14} />}
+          </button>
+        </div>
+
+        {/* Habit list */}
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-8 rounded shimmer" />
+            <div className="h-8 rounded shimmer" />
+          </div>
+        ) : habits.length === 0 ? (
+          <p className="text-sm text-muted py-2">No habits tracked. Add one above!</p>
+        ) : (
+          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+            {habits.map((habit) => (
+              <div key={habit.id} className="flex items-center gap-2 rounded-lg bg-surface px-2 py-1.5 group">
+                <button
+                  onClick={() => toggleCheckin(habit)}
+                  className={`shrink-0 transition-colors ${habit.checked_today ? "text-success" : "text-muted hover:text-success"}`}
+                  title={habit.checked_today ? "Checked in today" : "Check in"}
+                >
+                  {habit.checked_today ? <Check size={16} /> : <Circle size={16} />}
+                </button>
+                <span className="flex-1 text-sm truncate">{habit.name}</span>
+                <span className={`text-xs font-medium ${streakColor(habit.streak)}`} title={`${habit.streak} day streak`}>
+                  {habit.streak}
+                  <Flame size={10} className="inline ml-0.5" />
+                </span>
+                <button
+                  onClick={() => remove(habit.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all"
+                  title="Delete"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </WidgetCard>
+  );
+}
+
 const WIDGET_ORDER_KEY = "dash:widget-order";
 
 const DEFAULT_WIDGET_ORDER = [
   "quick-capture",
   "task-manager",
+  "habit-tracker",
   "streak",
   "library-stats",
   "achievements",
@@ -510,6 +604,7 @@ const DEFAULT_WIDGET_ORDER = [
 const WIDGET_COMPONENTS: Record<string, React.FC> = {
   "quick-capture": QuickCapture,
   "task-manager": TaskManager,
+  "habit-tracker": HabitTracker,
   "streak": StreakCounter,
   "library-stats": LibraryStats,
   "achievements": GamificationBadges,
