@@ -2,7 +2,8 @@ import { WidgetCard } from "@/components/ui/WidgetCard";
 import { useDashboardStats, useGoals, useCommands, useTimeline } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
-  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock
+  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock,
+  GripVertical, ArrowUp, ArrowDown, Check
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { sendCommand } from "@/lib/api";
@@ -397,21 +398,127 @@ function ActivityHeatmap() {
   );
 }
 
+const WIDGET_ORDER_KEY = "dash:widget-order";
+
+const DEFAULT_WIDGET_ORDER = [
+  "quick-capture",
+  "streak",
+  "library-stats",
+  "achievements",
+  "health",
+  "goals",
+  "recent",
+  "ai-suggest",
+  "activity",
+];
+
+const WIDGET_COMPONENTS: Record<string, React.FC> = {
+  "quick-capture": QuickCapture,
+  "streak": StreakCounter,
+  "library-stats": LibraryStats,
+  "achievements": GamificationBadges,
+  "health": IntegrationHealth,
+  "goals": ActiveGoals,
+  "recent": RecentCommands,
+  "ai-suggest": AiSuggest,
+  "activity": ActivityHeatmap,
+};
+
 export function Overview() {
+  const [order, setOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WIDGET_ORDER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Validate: all default widgets must be present
+        if (DEFAULT_WIDGET_ORDER.every((id) => parsed.includes(id))) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return DEFAULT_WIDGET_ORDER;
+  });
+  const [reorderMode, setReorderMode] = useState(false);
+
+  const saveOrder = useCallback((newOrder: string[]) => {
+    setOrder(newOrder);
+    localStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(newOrder));
+  }, []);
+
+  const moveWidget = useCallback(
+    (id: string, direction: "up" | "down") => {
+      const idx = order.indexOf(id);
+      if (idx === -1) return;
+      const newIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= order.length) return;
+      const newOrder = [...order];
+      [newOrder[idx], newOrder[newIdx]] = [newOrder[newIdx], newOrder[idx]];
+      saveOrder(newOrder);
+    },
+    [order, saveOrder]
+  );
+
+  const resetOrder = useCallback(() => {
+    saveOrder(DEFAULT_WIDGET_ORDER);
+  }, [saveOrder]);
+
   return (
     <div>
-      <Greeting />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <QuickCapture />
-        <StreakCounter />
-        <LibraryStats />
-        <GamificationBadges />
-        <IntegrationHealth />
-        <ActiveGoals />
-        <RecentCommands />
-        <AiSuggest />
-        <ActivityHeatmap />
+      <div className="mb-6 flex items-center justify-between">
+        <Greeting />
+        <button
+          onClick={() => setReorderMode((v) => !v)}
+          className={`flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            reorderMode
+              ? "border-accent bg-accent text-white"
+              : "border-border bg-card text-muted hover:text-text"
+          }`}
+        >
+          {reorderMode ? <Check size={14} /> : <GripVertical size={14} />}
+          {reorderMode ? "Done" : "Reorder"}
+        </button>
       </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {order.map((id, idx) => {
+          const Component = WIDGET_COMPONENTS[id];
+          if (!Component) return null;
+          return (
+            <div key={id} className="relative group">
+              {reorderMode && (
+                <div className="absolute -top-2 -right-2 z-10 flex items-center gap-0.5">
+                  <button
+                    onClick={() => moveWidget(id, "up")}
+                    disabled={idx === 0}
+                    className="rounded-full border border-border bg-card p-1 text-muted shadow-sm transition-colors hover:text-accent disabled:opacity-30"
+                  >
+                    <ArrowUp size={12} />
+                  </button>
+                  <button
+                    onClick={() => moveWidget(id, "down")}
+                    disabled={idx === order.length - 1}
+                    className="rounded-full border border-border bg-card p-1 text-muted shadow-sm transition-colors hover:text-accent disabled:opacity-30"
+                  >
+                    <ArrowDown size={12} />
+                  </button>
+                </div>
+              )}
+              <Component />
+            </div>
+          );
+        })}
+      </div>
+      {reorderMode && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={resetOrder}
+            className="text-xs text-muted hover:text-text transition-colors"
+          >
+            Reset to default order
+          </button>
+        </div>
+      )}
     </div>
   );
 }
