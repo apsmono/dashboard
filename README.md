@@ -10,6 +10,48 @@ React + TypeScript portfolio and authenticated command center.
 - **Tailwind CSS v4** — Styling
 - **Lucide React** — Icons
 - **Firebase Auth** — Google Sign-In
+- **cmdk** — Command palette
+
+## Features
+
+### Command Center
+- **Cmd+K Command Palette** — Global search across library entries, quick navigation, instant commands
+- **Quick Capture** — Send commands to the brain directly from the dashboard
+- **Theme Toggle** — Dark / light / system mode with persistent preference
+
+### Library
+- **Pull-to-Refresh** — Mobile-style pull gesture to reload library entries
+- **Random Note** — Surface a random entry for rediscovery
+- **Focus Mode** — Distraction-free fullscreen reading for entries
+- **AI Q&A per Entry** — Ask questions about any entry with isolated chat history per item
+- **YouTube Transcript Auto-Fetch** — Backend automatically fetches transcripts for YouTube stubs
+- **Link Preview** — See title and metadata before saving a link
+- **Duplicate Detection** — Warns if a URL already exists in the library
+
+### Overview Widgets
+- **Activity Heatmap** — GitHub-style 12-week activity visualization
+- **Streak Counter** — Current, best, and total activity streaks
+- **Gamification Badges** — Achievements: First Capture, Collector, Librarian, Explorer, Streaker, Master
+- **Library Stats** — Entry counts by section (profile, terms, books, articles, thoughts, references)
+- **Integration Health** — Real-time status of brain integrations
+- **Active Goals** — List of current goals from the brain
+- **Recent Commands** — History of sent commands
+- **AI Suggestions** — One-click suggested queries
+
+### Navigation
+- **Keyboard Shortcuts** — `/` to focus search, `Cmd+K` for command palette, `1-9` for tab switching
+- **Mobile Bottom Nav** — Primary tabs + "More" drawer with secondary tabs (Graph, Timeline, Analysis, Commands, Reminders)
+- **Desktop Nav Tabs** — Full tab bar with all sections
+
+### Views
+- **Overview** — Command center hub with widgets
+- **Library** — Searchable, filterable knowledge base
+- **Graph** — Interactive force-directed knowledge graph with section filtering
+- **Timeline** — Chronological activity view
+- **Analysis** — Tags, gaps, and activity analytics
+- **Planning** — Goals and projects
+- **Commands** — Full command history
+- **Reminders** — Scheduled reminders
 
 ## Development
 
