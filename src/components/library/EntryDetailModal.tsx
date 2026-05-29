@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { X, ExternalLink, Clock, Tag, FileText, Loader2, Pencil, Sparkles, BookOpen } from "lucide-react";
+import { X, ExternalLink, Clock, Tag, FileText, Loader2, Pencil, Sparkles, BookOpen, Maximize2, Minimize2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { useLibraryEntry, useUpdateLibraryEntry, useEntrySynthesis } from "@/hooks/useApi";
 import type { LibraryEntry } from "@/types";
@@ -39,6 +39,7 @@ type Tab = "read" | "edit" | "ai";
 
 export function EntryDetailModal({ entry, onClose, onUpdated }: EntryDetailModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("read");
+  const [focusMode, setFocusMode] = useState(false);
   const { data: fullEntry, loading } = useLibraryEntry(entry?.id ?? null);
   const { update, updating, error: updateError } = useUpdateLibraryEntry();
   const { ask, answer, loading: aiLoading, error: aiError, reset: resetAi } = useEntrySynthesis();
@@ -81,25 +82,44 @@ export function EntryDetailModal({ entry, onClose, onUpdated }: EntryDetailModal
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-all ${
+        focusMode ? "p-0 sm:p-4" : ""
+      }`}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg"
+        className={`w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg transition-all ${
+          focusMode
+            ? "max-w-4xl max-h-[100vh] sm:max-h-[95vh] p-6 sm:p-10"
+            : "max-w-2xl max-h-[85vh] p-6"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {platformIcon(displayEntry?.source_url)}
-            <h2 className="text-lg font-semibold truncate">{displayEntry?.title}</h2>
+            <h2 className={`font-semibold truncate ${focusMode ? "text-xl" : "text-lg"}`}>
+              {displayEntry?.title}
+            </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1 text-muted hover:text-text hover:bg-surface transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            {activeTab === "read" && (
+              <button
+                onClick={() => setFocusMode((v) => !v)}
+                className="rounded-lg p-1.5 text-muted hover:text-text hover:bg-surface transition-colors"
+                title={focusMode ? "Exit focus mode" : "Focus mode"}
+              >
+                {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-muted hover:text-text hover:bg-surface transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Meta row */}
@@ -189,9 +209,9 @@ export function EntryDetailModal({ entry, onClose, onUpdated }: EntryDetailModal
               </div>
             )}
             {displayEntry?.markdown && (
-              <div className="rounded-lg border border-border bg-surface p-4">
+              <div className={`rounded-lg border border-border bg-surface ${focusMode ? "p-6 sm:p-8" : "p-4"}`}>
                 <div
-                  className="prose prose-sm max-w-none text-sm text-text"
+                  className={`prose max-w-none text-text ${focusMode ? "prose-base" : "prose-sm"}`}
                   dangerouslySetInnerHTML={{ __html: renderMarkdownLite(displayEntry.markdown) }}
                 />
               </div>
