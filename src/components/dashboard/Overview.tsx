@@ -2,9 +2,9 @@ import { WidgetCard } from "@/components/ui/WidgetCard";
 import { useDashboardStats, useGoals, useCommands, useTimeline } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
-  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame
+  Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { sendCommand } from "@/lib/api";
 
 const statIcons: Record<string, React.ReactNode> = {
@@ -206,6 +206,119 @@ function AiSuggest() {
   );
 }
 
+function useStreakData() {
+  const today = new Date();
+  const fromDate = new Date(today);
+  fromDate.setDate(fromDate.getDate() - 365);
+  const fromStr = fromDate.toISOString().split("T")[0];
+  const toStr = today.toISOString().split("T")[0];
+
+  const { data } = useTimeline({ from_date: fromStr, to_date: toStr });
+  const dailyCounts = data?.daily_counts ?? {};
+
+  return useMemo(() => {
+    const dates = Object.keys(dailyCounts).sort();
+    if (dates.length === 0) return { current: 0, best: 0, total: 0 };
+
+    // Current streak: count backwards from today
+    let current = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const str = d.toISOString().split("T")[0];
+      if ((dailyCounts[str] ?? 0) > 0) {
+        current++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+
+    // Best streak
+    let best = 0;
+    let run = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const str = d.toISOString().split("T")[0];
+      if ((dailyCounts[str] ?? 0) > 0) {
+        run++;
+        best = Math.max(best, run);
+      } else {
+        run = 0;
+      }
+    }
+
+    const total = Object.values(dailyCounts).reduce((a, b) => a + (b as number), 0);
+    return { current, best, total };
+  }, [dailyCounts]);
+}
+
+function StreakCounter() {
+  const { current, best, total } = useStreakData();
+
+  return (
+    <WidgetCard title="Streak" icon={<Flame size={18} />} accent>
+      <div className="flex items-center justify-between">
+        <div className="text-center flex-1">
+          <div className="text-3xl font-bold text-accent">{current}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted">Current</div>
+        </div>
+        <div className="w-px h-10 bg-border" />
+        <div className="text-center flex-1">
+          <div className="text-3xl font-bold text-text">{best}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted">Best</div>
+        </div>
+        <div className="w-px h-10 bg-border" />
+        <div className="text-center flex-1">
+          <div className="text-3xl font-bold text-text">{total}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted">Total</div>
+        </div>
+      </div>
+    </WidgetCard>
+  );
+}
+
+function GamificationBadges() {
+  const { data: stats } = useDashboardStats();
+  const { current: streak } = useStreakData();
+  const library = stats?.library;
+  const totalEntries = library
+    ? Object.values(library).reduce((a, b) => a + (b as number), 0)
+    : 0;
+
+  const badges = [
+    { id: "first", label: "First Capture", desc: "Save your first entry", unlocked: totalEntries >= 1, icon: <Zap size={16} /> },
+    { id: "collector", label: "Collector", desc: "10+ entries", unlocked: totalEntries >= 10, icon: <BookOpen size={16} /> },
+    { id: "librarian", label: "Librarian", desc: "50+ entries", unlocked: totalEntries >= 50, icon: <BookOpen size={16} /> },
+    { id: "diverse", label: "Explorer", desc: "3+ sections", unlocked: library && Object.values(library).filter((v) => (v as number) > 0).length >= 3, icon: <Target size={16} /> },
+    { id: "streaker", label: "Streaker", desc: "7-day streak", unlocked: streak >= 7, icon: <Flame size={16} /> },
+    { id: "master", label: "Master", desc: "100+ entries", unlocked: totalEntries >= 100, icon: <Trophy size={16} /> },
+  ];
+
+  const unlockedCount = badges.filter((b) => b.unlocked).length;
+
+  return (
+    <WidgetCard title={`Achievements ${unlockedCount}/${badges.length}`} icon={<Trophy size={18} />} className="col-span-1 sm:col-span-2">
+      <div className="grid grid-cols-3 gap-2">
+        {badges.map((b) => (
+          <div
+            key={b.id}
+            title={b.desc}
+            className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${
+              b.unlocked
+                ? "border-accent/30 bg-accent/5 text-accent"
+                : "border-border bg-card text-muted opacity-60"
+            }`}
+          >
+            {b.unlocked ? b.icon : <Lock size={14} />}
+            <span className="text-[10px] font-medium text-center leading-tight">{b.label}</span>
+          </div>
+        ))}
+      </div>
+    </WidgetCard>
+  );
+}
+
 function ActivityHeatmap() {
   // Calculate date range: last 84 days (12 weeks)
   const today = new Date();
@@ -290,7 +403,9 @@ export function Overview() {
       <Greeting />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickCapture />
+        <StreakCounter />
         <LibraryStats />
+        <GamificationBadges />
         <IntegrationHealth />
         <ActiveGoals />
         <RecentCommands />

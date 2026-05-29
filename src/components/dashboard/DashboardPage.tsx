@@ -11,7 +11,10 @@ import { Reminders } from "./Reminders";
 import { CommandInput } from "./CommandInput";
 import { CommandPalette } from "@/components/CommandPalette";
 import { sendCommand } from "@/lib/api";
-import { LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send, Search } from "lucide-react";
+import {
+  LogOut, WifiOff, LayoutDashboard, BookOpen, Target, Send, Search,
+  GitBranch, Calendar, BarChart3, Terminal, Bell, MoreHorizontal, X
+} from "lucide-react";
 
 const LibraryPage = lazy(() => import("@/components/library/LibraryPage").then((m) => ({ default: m.LibraryPage })));
 const GraphPage = lazy(() => import("@/components/graph/GraphPage").then((m) => ({ default: m.GraphPage })));
@@ -26,17 +29,31 @@ const MOBILE_TABS = [
   { id: "cmd", label: "Command", icon: Send },
 ];
 
+const MORE_TABS = [
+  { id: "graph", label: "Graph", icon: GitBranch },
+  { id: "timeline", label: "Timeline", icon: Calendar },
+  { id: "analysis", label: "Analysis", icon: BarChart3 },
+  { id: "commands", label: "Commands", icon: Terminal },
+  { id: "reminders", label: "Reminders", icon: Bell },
+];
+
 export function DashboardPage() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [moreOpen, setMoreOpen] = useState(false);
   const isOnline = useOnlineStatus();
   const { viewMode } = useViewMode();
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    setMoreOpen(false);
+  }, []);
   const focusSearch = useCallback(() => {
     // Dispatch a custom event that LibraryPage listens for
     window.dispatchEvent(new CustomEvent("focus-library-search"));
   }, []);
 
-  useKeyboardShortcuts(activeTab, setActiveTab, focusSearch);
+  useKeyboardShortcuts(activeTab, handleTabChange, focusSearch);
 
   if (loading) {
     return (
@@ -119,26 +136,78 @@ export function DashboardPage() {
 
       {/* Mobile bottom nav */}
       {viewMode === "mobile" && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-md items-center justify-around py-2">
-            {MOBILE_TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors ${
-                    isActive ? "text-accent" : "text-muted"
-                  }`}
-                >
-                  <Icon size={20} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        <>
+          <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-md items-center justify-around py-2">
+              {MOBILE_TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors ${
+                      isActive ? "text-accent" : "text-muted"
+                    }`}
+                  >
+                    <Icon size={20} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors ${
+                  moreOpen ? "text-accent" : "text-muted"
+                }`}
+              >
+                <MoreHorizontal size={20} />
+                <span>More</span>
+              </button>
+            </div>
+          </nav>
+
+          {/* More menu drawer */}
+          {moreOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/50"
+                onClick={() => setMoreOpen(false)}
+              />
+              <div className="fixed bottom-16 left-2 right-2 z-50 rounded-xl border border-border bg-card p-3 shadow-lg">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted">More</span>
+                  <button
+                    onClick={() => setMoreOpen(false)}
+                    className="rounded p-1 text-muted hover:text-text"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {MORE_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-xs transition-colors ${
+                          isActive
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-border bg-surface text-muted hover:text-text"
+                        }`}
+                      >
+                        <Icon size={18} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );
