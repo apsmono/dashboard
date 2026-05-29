@@ -21,6 +21,10 @@ import {
   fetchYouTubeTranscript,
   updateLibraryEntry,
   synthesizeEntry,
+  fetchTasks,
+  createTask,
+  updateTask,
+  deleteTask,
 } from "@/lib/api";
 import type {
   DashboardStats,
@@ -640,4 +644,52 @@ export function useFocusSuggestions() {
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData };
+}
+
+// ---------------------------------------------------------------------------
+// Tasks
+// ---------------------------------------------------------------------------
+
+export function useTasks(filters?: { status?: string; goal_id?: string; project_id?: string }) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchTasks>> | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetchTasks(filters);
+      setData(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.status, filters?.goal_id, filters?.project_id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const create = useCallback(async (payload: Parameters<typeof createTask>[0]) => {
+    const res = await createTask(payload);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  const update = useCallback(async (taskId: string, payload: Parameters<typeof updateTask>[1]) => {
+    const res = await updateTask(taskId, payload);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  const remove = useCallback(async (taskId: string) => {
+    const res = await deleteTask(taskId);
+    await fetchData();
+    return res;
+  }, [fetchData]);
+
+  return { data, error, loading, refetch: fetchData, create, update, remove };
 }

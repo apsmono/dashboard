@@ -1,9 +1,9 @@
 import { WidgetCard } from "@/components/ui/WidgetCard";
-import { useDashboardStats, useGoals, useCommands, useTimeline } from "@/hooks/useApi";
+import { useDashboardStats, useGoals, useCommands, useTimeline, useTasks } from "@/hooks/useApi";
 import {
   BookOpen, User, Hash, FileText, Lightbulb, Link2, RefreshCw,
   Zap, Target, TrendingUp, Activity, Send, Sparkles, Flame, Trophy, Lock,
-  GripVertical, ArrowUp, ArrowDown, Check
+  GripVertical, ArrowUp, ArrowDown, Check, Circle, Plus, Trash2, Calendar
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { sendCommand } from "@/lib/api";
@@ -398,10 +398,105 @@ function ActivityHeatmap() {
   );
 }
 
+function TaskManager() {
+  const { data, loading, create, update, remove } = useTasks({ status: "active" });
+  const [newTask, setNewTask] = useState("");
+  const [adding, setAdding] = useState(false);
+  const activeTasks = data?.active ?? [];
+
+  const handleAdd = async () => {
+    if (!newTask.trim()) return;
+    setAdding(true);
+    try {
+      await create({ title: newTask.trim(), priority: "medium" });
+      setNewTask("");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const toggleTask = async (task: { id: string; status: string }) => {
+    await update(task.id, { status: task.status === "active" ? "completed" : "active" });
+  };
+
+  const priorityColor = (p: string) => {
+    switch (p) {
+      case "high": return "bg-danger";
+      case "medium": return "bg-warning";
+      case "low": return "bg-success";
+      default: return "bg-muted";
+    }
+  };
+
+  return (
+    <WidgetCard title={`Tasks ${activeTasks.length > 0 ? `(${activeTasks.length})` : ""}`} icon={<Target size={18} />} accent>
+      <div className="space-y-2">
+        {/* Add task */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+            placeholder="Add a task..."
+            className="flex-1 rounded-lg border border-border bg-input-bg px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={adding || !newTask.trim()}
+            className="flex items-center rounded-lg bg-accent px-2.5 py-1.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {adding ? <Activity size={14} className="animate-spin" /> : <Plus size={14} />}
+          </button>
+        </div>
+
+        {/* Task list */}
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-8 rounded shimmer" />
+            <div className="h-8 rounded shimmer" />
+          </div>
+        ) : activeTasks.length === 0 ? (
+          <p className="text-sm text-muted py-2">No active tasks. Add one above!</p>
+        ) : (
+          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+            {activeTasks.map((task) => (
+              <div key={task.id} className="flex items-center gap-2 rounded-lg bg-surface px-2 py-1.5 group">
+                <button
+                  onClick={() => toggleTask(task)}
+                  className="shrink-0 text-muted hover:text-success transition-colors"
+                >
+                  <Circle size={16} />
+                </button>
+                <span className="flex-1 text-sm truncate">{task.title}</span>
+                <div className={`h-2 w-2 rounded-full ${priorityColor(task.priority)}`} title={task.priority} />
+                {task.due_date && (
+                  <span className="text-[10px] text-muted flex items-center gap-0.5">
+                    <Calendar size={10} />
+                    {task.due_date}
+                  </span>
+                )}
+                <button
+                  onClick={() => remove(task.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all"
+                  title="Delete"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </WidgetCard>
+  );
+}
+
 const WIDGET_ORDER_KEY = "dash:widget-order";
 
 const DEFAULT_WIDGET_ORDER = [
   "quick-capture",
+  "task-manager",
   "streak",
   "library-stats",
   "achievements",
@@ -414,6 +509,7 @@ const DEFAULT_WIDGET_ORDER = [
 
 const WIDGET_COMPONENTS: Record<string, React.FC> = {
   "quick-capture": QuickCapture,
+  "task-manager": TaskManager,
   "streak": StreakCounter,
   "library-stats": LibraryStats,
   "achievements": GamificationBadges,

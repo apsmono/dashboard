@@ -303,6 +303,72 @@ export interface FocusSuggestion {
   suggestions: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Tasks
+// ---------------------------------------------------------------------------
+
+export interface Task {
+  id: string;
+  title: string;
+  status: string;
+  goal_id: string | null;
+  project_id: string | null;
+  priority: string;
+  due_date: string | null;
+  created_at: string | null;
+  path: string;
+}
+
+export interface TasksResponse {
+  tasks: Task[];
+  active: Task[];
+  completed: Task[];
+  by_priority: {
+    high: Task[];
+    medium: Task[];
+    low: Task[];
+  };
+}
+
+export interface TaskCreatePayload {
+  title: string;
+  status?: string;
+  goal_id?: string | null;
+  project_id?: string | null;
+  priority?: string;
+  due_date?: string | null;
+}
+
+export interface TaskUpdatePayload {
+  title?: string;
+  status?: string;
+  goal_id?: string | null;
+  project_id?: string | null;
+  priority?: string;
+  due_date?: string | null;
+}
+
+export async function fetchTasks(params?: { status?: string; goal_id?: string; project_id?: string }): Promise<TasksResponse> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.append("status", params.status);
+  if (params?.goal_id) qs.append("goal_id", params.goal_id);
+  if (params?.project_id) qs.append("project_id", params.project_id);
+  const query = qs.toString();
+  return apiGet<TasksResponse>(`/api/v1/planning/tasks${query ? `?${query}` : ""}`);
+}
+
+export async function createTask(payload: TaskCreatePayload): Promise<Task & { status: string }> {
+  return apiPost<Task & { status: string }>("/api/v1/planning/tasks", payload);
+}
+
+export async function updateTask(taskId: string, payload: TaskUpdatePayload): Promise<Task & { status: string }> {
+  return apiPut<Task & { status: string }>(`/api/v1/planning/tasks/${taskId}`, payload);
+}
+
+export async function deleteTask(taskId: string): Promise<{ status: string; id: string }> {
+  return apiDelete<{ status: string; id: string }>(`/api/v1/planning/tasks/${taskId}`);
+}
+
 export async function fetchGoals(): Promise<PlanningGoals> {
   return apiGet<PlanningGoals>("/api/v1/planning/goals");
 }

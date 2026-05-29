@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight } from "lucide-react";
+import { Target, FolderKanban, Sparkles, Loader2, CheckCircle2, Circle, Pause, Lightbulb, Trophy, AlertCircle, ArrowRight, ListTodo, Plus, Trash2, Calendar } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useGoals, useProjects, useFocusSuggestions } from "@/hooks/useApi";
+import { useGoals, useProjects, useFocusSuggestions, useTasks } from "@/hooks/useApi";
 import { generateWeeklyReview } from "@/lib/api";
 
 interface ReviewData {
@@ -19,7 +19,10 @@ export function PlanningPage() {
   const { data: goalsData, loading: goalsLoading } = useGoals();
   const { data: projectsData, loading: projectsLoading } = useProjects();
   const { data: focusData, loading: focusLoading } = useFocusSuggestions();
+  const { data: tasksData, loading: tasksLoading, create: createTask, update: updateTask, remove: deleteTask } = useTasks();
   const [review, setReview] = useState<ReviewData | null>(null);
+  const [newTaskText, setNewTaskText] = useState("");
+  const [addingTask, setAddingTask] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
 
   const handleGenerateReview = async () => {
@@ -34,7 +37,22 @@ export function PlanningPage() {
     }
   };
 
-  const loading = goalsLoading || projectsLoading || focusLoading;
+  const handleAddTask = async () => {
+    if (!newTaskText.trim()) return;
+    setAddingTask(true);
+    try {
+      await createTask({ title: newTaskText.trim(), priority: "medium" });
+      setNewTaskText("");
+    } finally {
+      setAddingTask(false);
+    }
+  };
+
+  const toggleTask = async (taskId: string, currentStatus: string) => {
+    await updateTask(taskId, { status: currentStatus === "active" ? "completed" : "active" });
+  };
+
+  const loading = goalsLoading || projectsLoading || focusLoading || tasksLoading;
 
   if (loading) {
     return (
@@ -71,6 +89,104 @@ export function PlanningPage() {
           )}
         </Card>
       )}
+
+      {/* Tasks */}
+      <Card>
+        <CardTitle className="flex items-center gap-2">
+          <ListTodo size={16} className="text-accent" />
+          Tasks
+          {tasksData?.active && tasksData.active.length > 0 && (
+            <Badge variant="accent" className="text-[10px]">
+              {tasksData.active.length} active
+            </Badge>
+          )}
+        </CardTitle>
+        {/* Add task */}
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={newTaskText}
+            onChange={(e) => setNewTaskText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddTask(); }}
+            placeholder="Add a new task..."
+            className="flex-1 rounded-lg border border-border bg-input-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          />
+          <button
+            onClick={handleAddTask}
+            disabled={addingTask || !newTaskText.trim()}
+            className="flex items-center gap-1 rounded-lg bg-accent px-3 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {addingTask ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            Add
+          </button>
+        </div>
+
+        {tasksLoading ? (
+          <div className="space-y-2">
+            <div className="h-8 rounded shimmer" />
+            <div className="h-8 rounded shimmer" />
+          </div>
+        ) : tasksData?.active.length === 0 && tasksData?.completed.length === 0 ? (
+          <p className="text-sm text-muted">No tasks yet. Add one above!</p>
+        ) : (
+          <div className="space-y-3">
+            {/* Active tasks */}
+            {tasksData?.active && tasksData.active.length > 0 && (
+              <div className="space-y-1.5">
+                {tasksData.active.map((task) => (
+                  <div key={task.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 group">
+                    <button
+                      onClick={() => toggleTask(task.id, task.status)}
+                      className="shrink-0 text-muted hover:text-success transition-colors"
+                    >
+                      <Circle size={16} />
+                    </button>
+                    <span className="flex-1 text-sm">{task.title}</span>
+                    {task.priority === "high" && <Badge variant="danger" className="text-[10px]">High</Badge>}
+                    {task.due_date && (
+                      <span className="text-[10px] text-muted flex items-center gap-0.5">
+                        <Calendar size={10} />
+                        {task.due_date}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Completed tasks */}
+            {tasksData?.completed && tasksData.completed.length > 0 && (
+              <div>
+                <div className="mb-1 text-xs font-medium text-muted">
+                  Completed ({tasksData.completed.length})
+                </div>
+                <div className="space-y-1">
+                  {tasksData.completed.slice(0, 3).map((task) => (
+                    <div key={task.id} className="flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 opacity-50">
+                      <CheckCircle2 size={14} className="text-success shrink-0" />
+                      <span className="flex-1 text-sm line-through">{task.title}</span>
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="text-muted hover:text-danger transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {tasksData.completed.length > 3 && (
+                    <p className="text-xs text-muted pl-2">+{tasksData.completed.length - 3} more</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
 
       {/* Goals */}
       <Card>
