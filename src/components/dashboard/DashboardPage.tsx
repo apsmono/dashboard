@@ -13,7 +13,7 @@ import { LayoutSettingsPanel } from "@/components/layout/LayoutSettingsPanel";
 import { ZenShell } from "@/components/zen/ZenShell";
 import { ClarityBoard } from "@/components/zen/ClarityBoard";
 import type { ZenView } from "@/components/zen/types";
-import { routeToTabState } from "@/lib/dashboardRoutes";
+import { routeToTabState, tabStateToRoute } from "@/lib/dashboardRoutes";
 import { sendCommand, sendGuideCommand } from "@/lib/api";
 import { flushMutationQueue } from "@/lib/sync";
 import {
@@ -84,6 +84,29 @@ function DashboardPageContent() {
     const initial = routeToTabState(window.location.hash) ?? { zenView: "core", moreTab: null };
     return initial.moreTab;
   });
+  // Write the URL hash whenever zenView or moreTab changes so that refreshing
+  // or bookmarking the page lands on the correct tab (write-side of Task 3).
+  //
+  // Rules:
+  // - tabStateToRoute returns null for the library tab → skip writing so that
+  //   useLibraryUrlState continues to own "#/library?..." (including its
+  //   view/sort/search/page query string).
+  // - Use replaceState (not pushState) to avoid flooding browser history on
+  //   every tab click — consistent with useLibraryUrlState's own approach.
+  // - replaceState does NOT fire hashchange, so App.tsx's listener is not
+  //   triggered and DashboardPage does not remount.
+  // - Guard: skip the write if the hash already equals the target route to
+  //   prevent a redundant replaceState on the very first render (Task 3
+  //   already hydrated the state from the hash, so they already match).
+  useEffect(() => {
+    const route = tabStateToRoute({ zenView, moreTab });
+    if (route === null) return; // library: owned by useLibraryUrlState
+    const target = `#${route}`;
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
+    }
+  }, [zenView, moreTab]);
+
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileGuideOpen, setMobileGuideOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
