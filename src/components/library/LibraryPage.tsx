@@ -156,6 +156,8 @@ export function LibraryPage() {
           loading={loading}
           onEntryClick={handleEntryClick}
           onDeleteEntry={handleDeleteEntry}
+          openMenuId={openMenuId}
+          setOpenMenuId={setOpenMenuId}
         />
       ) : urlState.view === "cards" ? (
         <CardView entries={entries} onEntryClick={handleEntryClick} onDeleteEntry={handleDeleteEntry} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
