@@ -66,7 +66,27 @@
 
 ### GET `/api/v1/library/entries`
 
-**Query params:** `?section=terms&status=active&tag=mcp&search=protocol&page=1&per_page=20`
+**Query params:** `?section=terms&status=active&tag=mcp&search=protocol&sort=title_asc&page=1&per_page=20`
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `section` | string | Filter by section (profile, terms, books, articles, thoughts, references) |
+| `status` | string | Filter by status (draft, active, archived) |
+| `tag` | string | Filter by single tag |
+| `search` | string | Full-text search query |
+| `sort` | string | Sort mode: `newest` (default), `oldest`, `title_asc`, `title_desc`, `updated` |
+| `order` | string | Override sort direction for raw field names: `asc` or `desc` |
+| `page` | int | Page number (1-indexed, default: 1) |
+| `per_page` | int | Results per page (1–100, default: 20) |
+
+**Sort modes:**
+- `newest` → sort by `captured_at` descending (most recent first)
+- `oldest` → sort by `captured_at` ascending (oldest first)
+- `title_asc` → sort by `title` ascending (A–Z)
+- `title_desc` → sort by `title` descending (Z–A)
+- `updated` → sort by `updated_at` descending (most recently modified first)
+
+**Response:**
 
 ```json
 {
@@ -300,6 +320,7 @@ export interface GraphEdge {
 
 ## Changelog
 
+- **2026-05-30** — Documented `sort` and `order` query parameters for `GET /api/v1/library/entries` (title_asc, title_desc, newest, oldest, updated)
 - **2026-05-27** — Added Library, Graph, Timeline, Analysis, Planning endpoints (Phases 2–6)
 - **2026-05-27** — Added `GET /api/v1/library/entries`, `GET /api/v1/library/entries/{id}`, `GET /api/v1/library/sections`, `GET /api/v1/library/tags`
 - **2026-05-27** — Added `GET /api/v1/library/graph`, `GET /api/v1/library/timeline`

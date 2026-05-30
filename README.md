@@ -20,6 +20,9 @@ React + TypeScript portfolio and authenticated command center.
 - **Theme Toggle** — Dark / light / system mode with persistent preference
 
 ### Library
+- **Multi-View Display** — Switch between card view, compact list view, and sortable table view
+- **Advanced Sorting** — Sort by newest/oldest capture date, title (A–Z / Z–A), or last updated
+- **Filtering** — Filter by section, tags, and status; full-text search across all entries
 - **Pull-to-Refresh** — Mobile-style pull gesture to reload library entries
 - **Random Note** — Surface a random entry for rediscovery
 - **Focus Mode** — Distraction-free fullscreen reading for entries

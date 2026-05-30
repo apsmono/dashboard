@@ -264,11 +264,11 @@ thumbnail (img.youtube.com/vi/{id}/maxresdefault.jpg)
 
 Densest view; power-user / bulk-ops surface.
 
-Use TanStack Table for headless column logic (sorting, selection, column config).
+Use TanStack Table for headless column logic (selection, column config) — NOT for client-side sorting.
+
+**Sort strategy**: Sort is controlled via the LibraryFilters dropdown and applied server-side. Table displays entries in the order returned by the API. Do not use TanStack's `getSortedRowModel()` — it overrides the server sort and breaks the sort dropdown.
 
 Columns: select checkbox · title · type · status · tags · domain/source · date.
-
-Sortable column headers with aria-sort.
 
 Row selection enables bulk actions (§9).
 
