@@ -19,6 +19,8 @@ interface TableViewProps {
 }
 
 export function TableView({ entries, total: _total, loading, onEntryClick }: TableViewProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- total reserved for future bulk actions
+  void _total;
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState({});
 

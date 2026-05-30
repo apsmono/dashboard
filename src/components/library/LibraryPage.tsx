@@ -15,6 +15,7 @@ import { LibraryFilters } from "./LibraryFilters";
 import { LibraryPagination } from "./LibraryPagination";
 import { CardView } from "./CardView";
 import { CompactListView } from "./CompactListView";
+import { TableView } from "./TableView";
 
 export function LibraryPage() {
   const [urlState, setUrlState] = useLibraryUrlState();
@@ -84,6 +85,15 @@ export function LibraryPage() {
               </div>
             ))}
           </div>
+        ) : urlState.view === "table" ? (
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="h-10 bg-surface shimmer" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-12 border-b border-border/50 flex items-center px-3">
+                <div className="h-4 w-full rounded shimmer" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -134,6 +144,13 @@ export function LibraryPage() {
             )}
           </div>
         </div>
+      ) : urlState.view === "table" ? (
+        <TableView
+          entries={entries}
+          total={total}
+          loading={loading}
+          onEntryClick={handleEntryClick}
+        />
       ) : urlState.view === "cards" ? (
         <CardView entries={entries} onEntryClick={handleEntryClick} />
       ) : (

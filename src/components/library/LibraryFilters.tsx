@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   LayoutGrid,
   List,
+  Table,
   Calendar,
   Type,
   Database,
@@ -191,6 +192,18 @@ export function LibraryFilters({
             >
               <List size={13} />
               <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+              onClick={() => onStateChange({ view: "table" })}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors border-l border-border ${
+                urlState.view === "table"
+                  ? "bg-accent text-black font-semibold"
+                  : "bg-card text-muted hover:text-text"
+              }`}
+              title="Table view"
+            >
+              <Table size={13} />
+              <span className="hidden sm:inline">Table</span>
             </button>
           </div>
 
