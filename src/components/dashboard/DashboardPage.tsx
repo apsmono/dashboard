@@ -13,6 +13,7 @@ import { LayoutSettingsPanel } from "@/components/layout/LayoutSettingsPanel";
 import { ZenShell } from "@/components/zen/ZenShell";
 import { ClarityBoard } from "@/components/zen/ClarityBoard";
 import type { ZenView } from "@/components/zen/types";
+import { routeToTabState } from "@/lib/dashboardRoutes";
 import { sendCommand, sendGuideCommand } from "@/lib/api";
 import { flushMutationQueue } from "@/lib/sync";
 import {
@@ -72,8 +73,17 @@ export function DashboardPage() {
 
 function DashboardPageContent() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
-  const [zenView, setZenView] = useState<ZenView>("core");
-  const [moreTab, setMoreTab] = useState<string | null>(null);
+  // Hydrate initial tab state from the URL hash so refresh/deep-link lands on the
+  // correct tab. App.tsx only renders DashboardPageContent when routeToTabState is
+  // non-null, so `initial` will always be non-null here; the fallback is a safety guard.
+  const [zenView, setZenView] = useState<ZenView>(() => {
+    const initial = routeToTabState(window.location.hash) ?? { zenView: "core", moreTab: null };
+    return initial.zenView;
+  });
+  const [moreTab, setMoreTab] = useState<string | null>(() => {
+    const initial = routeToTabState(window.location.hash) ?? { zenView: "core", moreTab: null };
+    return initial.moreTab;
+  });
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileGuideOpen, setMobileGuideOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
