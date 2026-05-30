@@ -105,6 +105,14 @@ export async function fetchLibraryTags(): Promise<string[]> {
   return data.tags;
 }
 
+export async function fetchLibraryRecent(
+  limit = 4
+): Promise<{ entries: LibraryEntry[]; total: number }> {
+  return apiGet<{ entries: LibraryEntry[]; total: number }>(
+    `/api/v1/library/recent?limit=${limit}`
+  );
+}
+
 export interface LinkPreview {
   title: string;
   description: string;
@@ -457,4 +465,27 @@ export async function generateWeeklyReview(): Promise<WeeklyReview> {
 
 export async function fetchFocusSuggestions(): Promise<FocusSuggestion> {
   return apiGet<FocusSuggestion>("/api/v1/planning/focus");
+}
+
+// ---------------------------------------------------------------------------
+// AI Guide API
+// ---------------------------------------------------------------------------
+
+export interface GuideCommandResponse {
+  status: string;
+  intent?: string;
+  reply?: string;
+  params?: Record<string, unknown>;
+}
+
+export async function sendGuideCommand(text: string): Promise<GuideCommandResponse> {
+  return apiPost<GuideCommandResponse>("/api/v1/guide/command", { text });
+}
+
+export async function fetchGuideStatus(): Promise<{ status: string; metrics: Record<string, number> }> {
+  return apiGet<{ status: string; metrics: Record<string, number> }>("/api/v1/guide/status");
+}
+
+export async function parkDistraction(text: string): Promise<{ status: string; entry_id?: string; message?: string }> {
+  return apiPost<{ status: string; entry_id?: string; message?: string }>("/api/v1/guide/park", { text });
 }

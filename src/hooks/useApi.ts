@@ -33,6 +33,9 @@ import {
   uncheckinHabit,
   deleteHabit,
   updateGoal,
+  sendGuideCommand,
+  fetchGuideStatus,
+  parkDistraction,
 } from "@/lib/api";
 import { queueMutation } from "@/lib/offline";
 import type {
@@ -810,4 +813,100 @@ export function useHabits() {
   }, [fetchData]);
 
   return { data, error, loading, refetch: fetchData, create, checkin, uncheckin, remove };
+}
+
+// ---------------------------------------------------------------------------
+// AI Guide
+// ---------------------------------------------------------------------------
+
+export function useGuideCommand() {
+  const [reply, setReply] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const send = useCallback(async (text: string) => {
+    setLoading(true);
+    setError("");
+    setReply("");
+    try {
+      const res = await sendGuideCommand(text);
+      if (res.status !== "ok") {
+        throw new Error(res.reply ?? "Command failed");
+      }
+      setReply(res.reply ?? "");
+      return res;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to send command";
+      setError(msg);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setReply("");
+    setLoading(false);
+    setError("");
+  }, []);
+
+  return { send, reply, loading, error, reset };
+}
+
+export function useGuideStatus() {
+  const [metrics, setMetrics] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const res = await fetchGuideStatus();
+      if (res.status === "ok" && res.metrics) {
+        setMetrics(res.metrics);
+        setError("");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load status");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
+
+  return { metrics, loading, error, refetch: fetchMetrics };
+}
+
+export function useParkDistraction() {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const save = useCallback(async (text: string) => {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await parkDistraction(text);
+      if (res.status !== "ok") {
+        throw new Error(res.message ?? "Failed to park thought");
+      }
+      return res;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to park thought";
+      setError(msg);
+      throw e;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setSaving(false);
+    setError("");
+  }, []);
+
+  return { save, saving, error, reset };
 }
