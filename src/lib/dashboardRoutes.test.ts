@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { routeToTabState } from "./dashboardRoutes";
+import { routeToTabState, tabStateToRoute } from "./dashboardRoutes";
 
 describe("routeToTabState", () => {
   // Library routes
@@ -70,5 +70,76 @@ describe("routeToTabState", () => {
 
   it('"/login" → null (owned by App.tsx LoginPage, not the dashboard)', () => {
     expect(routeToTabState("/login")).toBeNull();
+  });
+});
+
+describe("tabStateToRoute", () => {
+  // Home / core with no moreTab → "/"
+  it('{ zenView: "core", moreTab: null } → "/"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: null })).toBe("/");
+  });
+
+  // Planner → "/planning" (canonical write-side)
+  it('{ zenView: "planner", moreTab: null } → "/planning"', () => {
+    expect(tabStateToRoute({ zenView: "planner", moreTab: null })).toBe("/planning");
+  });
+
+  // Library → null (sentinel: owned by useLibraryUrlState, caller must skip writing)
+  it('{ zenView: "library", moreTab: null } → null (library hash is owned by useLibraryUrlState)', () => {
+    expect(tabStateToRoute({ zenView: "library", moreTab: null })).toBeNull();
+  });
+
+  // More-tab routes
+  it('{ zenView: "core", moreTab: "graph" } → "/graph"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "graph" })).toBe("/graph");
+  });
+
+  it('{ zenView: "core", moreTab: "timeline" } → "/timeline"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "timeline" })).toBe("/timeline");
+  });
+
+  it('{ zenView: "core", moreTab: "analysis" } → "/analysis"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "analysis" })).toBe("/analysis");
+  });
+
+  it('{ zenView: "core", moreTab: "calendar" } → "/calendar"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "calendar" })).toBe("/calendar");
+  });
+
+  it('{ zenView: "core", moreTab: "commands" } → "/commands"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "commands" })).toBe("/commands");
+  });
+
+  it('{ zenView: "core", moreTab: "reminders" } → "/reminders"', () => {
+    expect(tabStateToRoute({ zenView: "core", moreTab: "reminders" })).toBe("/reminders");
+  });
+
+  // Round-trip: routeToTabState(tabStateToRoute(s)) === s for non-library states
+  it("round-trip: core → routeToTabState → same state", () => {
+    const s = { zenView: "core" as const, moreTab: null };
+    const route = tabStateToRoute(s);
+    expect(route).not.toBeNull();
+    expect(routeToTabState(route!)).toEqual(s);
+  });
+
+  it("round-trip: planner → routeToTabState → same state", () => {
+    const s = { zenView: "planner" as const, moreTab: null };
+    const route = tabStateToRoute(s);
+    expect(route).not.toBeNull();
+    expect(routeToTabState(route!)).toEqual(s);
+  });
+
+  it("round-trip: core+graph moreTab → routeToTabState → same state", () => {
+    const s = { zenView: "core" as const, moreTab: "graph" };
+    const route = tabStateToRoute(s);
+    expect(route).not.toBeNull();
+    expect(routeToTabState(route!)).toEqual(s);
+  });
+
+  it("round-trip: core+reminders moreTab → routeToTabState → same state", () => {
+    const s = { zenView: "core" as const, moreTab: "reminders" };
+    const route = tabStateToRoute(s);
+    expect(route).not.toBeNull();
+    expect(routeToTabState(route!)).toEqual(s);
   });
 });
