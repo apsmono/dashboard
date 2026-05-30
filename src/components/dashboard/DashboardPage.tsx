@@ -88,9 +88,11 @@ function DashboardPageContent() {
   // or bookmarking the page lands on the correct tab (write-side of Task 3).
   //
   // Rules:
-  // - tabStateToRoute returns null for the library tab → skip writing so that
-  //   useLibraryUrlState continues to own "#/library?..." (including its
-  //   view/sort/search/page query string).
+  // - tabStateToRoute returns "/library" for the library tab. We only write
+  //   "#/library" on ARRIVAL (when the current hash does not already start
+  //   with "#/library"). This lets useLibraryUrlState own "#/library?..."
+  //   (view/sort/search/page) while the user stays on the Library tab, but
+  //   ensures the base route is set when navigating here from another tab.
   // - Use replaceState (not pushState) to avoid flooding browser history on
   //   every tab click — consistent with useLibraryUrlState's own approach.
   // - replaceState does NOT fire hashchange, so App.tsx's listener is not
@@ -100,8 +102,14 @@ function DashboardPageContent() {
   //   already hydrated the state from the hash, so they already match).
   useEffect(() => {
     const route = tabStateToRoute({ zenView, moreTab });
-    if (route === null) return; // library: owned by useLibraryUrlState
     const target = `#${route}`;
+    // Library arrival guard: only write "#/library" when not already on a
+    // library route (e.g. "#/library?entry=...&view=table"). useLibraryUrlState
+    // owns the query string once you are on the Library tab.
+    if (route === "/library") {
+      const currentHash = window.location.hash.toLowerCase();
+      if (currentHash.startsWith("#/library")) return;
+    }
     if (window.location.hash !== target) {
       window.history.replaceState(null, "", target);
     }
@@ -305,7 +313,14 @@ function DashboardPageContent() {
       ) : (
         <ClarityBoard
           activeView={zenView}
-          onViewChange={setZenView}
+          onViewChange={(view) => {
+            // Clear moreTab so that tabStateToRoute produces the correct
+            // canonical route for the selected top-level view. Without this
+            // a stale moreTab causes the write-effect to emit e.g. "/graph"
+            // instead of "/" when the user clicks "Core Dashboard".
+            setZenView(view);
+            setMoreTab(null);
+          }}
           selectedCardId={selectedCardId}
           onSelectCard={setSelectedCardId}
           onContextAction={(actionId) => {

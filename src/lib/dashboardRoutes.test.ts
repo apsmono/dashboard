@@ -84,9 +84,10 @@ describe("tabStateToRoute", () => {
     expect(tabStateToRoute({ zenView: "planner", moreTab: null })).toBe("/planning");
   });
 
-  // Library → null (sentinel: owned by useLibraryUrlState, caller must skip writing)
-  it('{ zenView: "library", moreTab: null } → null (library hash is owned by useLibraryUrlState)', () => {
-    expect(tabStateToRoute({ zenView: "library", moreTab: null })).toBeNull();
+  // Library → "/library" (arrival route; DashboardPage write-effect guards against clobbering
+  // existing "#/library?..." query state owned by useLibraryUrlState)
+  it('{ zenView: "library", moreTab: null } → "/library" (arrival route)', () => {
+    expect(tabStateToRoute({ zenView: "library", moreTab: null })).toBe("/library");
   });
 
   // More-tab routes
@@ -114,32 +115,29 @@ describe("tabStateToRoute", () => {
     expect(tabStateToRoute({ zenView: "core", moreTab: "reminders" })).toBe("/reminders");
   });
 
-  // Round-trip: routeToTabState(tabStateToRoute(s)) === s for non-library states
+  // Round-trip: routeToTabState(tabStateToRoute(s)) === s for all states
   it("round-trip: core → routeToTabState → same state", () => {
     const s = { zenView: "core" as const, moreTab: null };
-    const route = tabStateToRoute(s);
-    expect(route).not.toBeNull();
-    expect(routeToTabState(route!)).toEqual(s);
+    expect(routeToTabState(tabStateToRoute(s))).toEqual(s);
   });
 
   it("round-trip: planner → routeToTabState → same state", () => {
     const s = { zenView: "planner" as const, moreTab: null };
-    const route = tabStateToRoute(s);
-    expect(route).not.toBeNull();
-    expect(routeToTabState(route!)).toEqual(s);
+    expect(routeToTabState(tabStateToRoute(s))).toEqual(s);
+  });
+
+  it("round-trip: library → routeToTabState → same state", () => {
+    const s = { zenView: "library" as const, moreTab: null };
+    expect(routeToTabState(tabStateToRoute(s))).toEqual(s);
   });
 
   it("round-trip: core+graph moreTab → routeToTabState → same state", () => {
     const s = { zenView: "core" as const, moreTab: "graph" };
-    const route = tabStateToRoute(s);
-    expect(route).not.toBeNull();
-    expect(routeToTabState(route!)).toEqual(s);
+    expect(routeToTabState(tabStateToRoute(s))).toEqual(s);
   });
 
   it("round-trip: core+reminders moreTab → routeToTabState → same state", () => {
     const s = { zenView: "core" as const, moreTab: "reminders" };
-    const route = tabStateToRoute(s);
-    expect(route).not.toBeNull();
-    expect(routeToTabState(route!)).toEqual(s);
+    expect(routeToTabState(tabStateToRoute(s))).toEqual(s);
   });
 });

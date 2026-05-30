@@ -75,23 +75,25 @@ export function routeToTabState(route: string): TabState | null {
  * The write-side inverse of `routeToTabState`. Maps a DashboardPage tab state
  * to the canonical hash route string to write via `history.replaceState`.
  *
- * Returns `null` for the library tab as a sentinel meaning "do not write the
- * hash". The `#/library?...` hash (including its query string) is owned
- * exclusively by `useLibraryUrlState`; writing over it here would clobber
- * the view/sort/search/page state that hook manages.
+ * Returns `"/library"` for the library tab as the arrival route. The caller
+ * (DashboardPage write-effect) is responsible for the arrival guard: only
+ * write `#/library` when the current hash does NOT already start with
+ * `#/library` (case-insensitive). That lets `useLibraryUrlState` continue
+ * to own `#/library?...` (view/sort/search/page) while you stay on the tab,
+ * but ensures the base route is set when arriving from another tab.
  *
- * Round-trip guarantee (for non-library states):
- *   routeToTabState(tabStateToRoute(s)!) deep-equals s
+ * Round-trip guarantee (for all states):
+ *   routeToTabState(tabStateToRoute(s)) deep-equals s
  *
  * Mapping table:
- *   zenView "library"                   → null   (sentinel: skip write)
+ *   zenView "library"                   → "/library"     (arrival route; caller guards against clobbering)
  *   zenView "core",    moreTab set      → "/" + moreTab  (e.g. "/graph")
  *   zenView "planner", moreTab null     → "/planning"    (canonical write form)
  *   zenView "core",    moreTab null     → "/"            (home)
  */
-export function tabStateToRoute({ zenView, moreTab }: TabState): string | null {
-  // Library is owned by useLibraryUrlState — caller must skip writing.
-  if (zenView === "library") return null;
+export function tabStateToRoute({ zenView, moreTab }: TabState): string {
+  // Library arrival route — caller must guard: only write when not already on #/library*.
+  if (zenView === "library") return "/library";
 
   // More-tab routes take precedence over zenView when moreTab is set.
   if (moreTab !== null) return `/${moreTab}`;
