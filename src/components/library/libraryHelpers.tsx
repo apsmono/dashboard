@@ -65,6 +65,28 @@ export function sectionAccentBg(section: string): string {
   return colors[section] || "bg-accent/10 text-accent";
 }
 
+/** Return a human-readable relative time string (e.g. "3 days ago", "just now"). */
+export function relativeTime(dateInput: string | Date): string {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(date.getTime())) return "";
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  const units: [string, number][] = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+  for (const [unit, seconds] of units) {
+    const value = Math.floor(diffSec / seconds);
+    if (value >= 1) {
+      return new Intl.RelativeTimeFormat(undefined, { numeric: "auto" }).format(-value, unit as Intl.RelativeTimeFormatUnit);
+    }
+  }
+  return "just now";
+}
+
 /** Generate page numbers with ellipsis for pagination */
 export function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
   if (total <= 7) {
