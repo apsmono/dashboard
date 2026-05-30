@@ -72,6 +72,8 @@ export interface LibraryFilters {
   tag?: string;
   status?: string;
   source_url?: string;
+  sort?: string;
+  order?: string;
   page?: number;
   per_page?: number;
 }
@@ -87,6 +89,8 @@ export async function fetchLibraryEntries(
   if (opts.source_url) params.set("source_url", opts.source_url);
   if (opts.page !== undefined) params.set("page", String(opts.page));
   if (opts.per_page !== undefined) params.set("per_page", String(opts.per_page));
+  if (opts.sort) params.set("sort", opts.sort);
+  if (opts.order) params.set("order", opts.order);
   const query = params.toString();
   return apiGet<LibraryListResponse>(`/api/v1/library/entries${query ? `?${query}` : ""}`);
 }
