@@ -5,7 +5,10 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Trash2, FileText } from "lucide-react";
 import type { LibraryEntry } from "@/types";
+import { youtubeThumbnail, platformIcon } from "./libraryHelpers";
+import { deleteLibraryEntry } from "@/lib/api";
 
 const columnHelper = createColumnHelper<LibraryEntry>();
 
@@ -14,9 +17,10 @@ interface TableViewProps {
   total: number;
   loading: boolean;
   onEntryClick: (entry: LibraryEntry) => void;
+  onDeleteEntry: (id: string) => void;
 }
 
-export function TableView({ entries, total: _total, loading, onEntryClick }: TableViewProps) {
+export function TableView({ entries, total: _total, loading, onEntryClick, onDeleteEntry }: TableViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- total reserved for future bulk actions
   void _total;
   const [rowSelection, setRowSelection] = useState({});
@@ -42,6 +46,38 @@ export function TableView({ entries, total: _total, loading, onEntryClick }: Tab
         />
       ),
       meta: { width: 40 },
+    }),
+    columnHelper.display({
+      id: "thumbnail",
+      header: () => "",
+      cell: ({ row }) => {
+        const thumb = youtubeThumbnail(row.original.source_url);
+        const icon = platformIcon(row.original.source_url) || <FileText size={16} />;
+        return (
+          <button
+            className="w-10 h-10 flex items-center justify-center rounded hover:opacity-80 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (row.original.source_url) window.open(row.original.source_url, "_blank");
+            }}
+            aria-label={`Open source for ${row.original.title}`}
+          >
+            {thumb ? (
+              <img
+                src={thumb}
+                alt=""
+                className="w-10 h-10 object-cover rounded"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="w-10 h-10 flex items-center justify-center text-muted">{icon}</span>
+            )}
+          </button>
+        );
+      },
+      meta: { width: 56 },
     }),
     columnHelper.accessor("title", {
       header: "Title",
@@ -94,10 +130,38 @@ export function TableView({ entries, total: _total, loading, onEntryClick }: Tab
     }),
     columnHelper.accessor("captured_at", {
       header: "Date",
-      cell: (info) => (
-        <span className="text-xs text-muted/60 font-mono-data">{info.getValue()}</span>
+      cell: (info) => {
+        const raw = info.getValue();
+        let display: string = raw;
+        try {
+          const d = new Date(raw);
+          if (!isNaN(d.getTime())) {
+            display = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(d);
+          }
+        } catch { /* keep raw */ }
+        return <span className="text-xs text-muted/60">{display}</span>;
+      },
+      meta: { width: 120 },
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: () => "",
+      cell: ({ row }) => (
+        <button
+          className="p-1 rounded hover:bg-red-500/10 text-muted hover:text-red-400 transition-colors"
+          title="Delete entry"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!window.confirm(`Delete "${row.original.title}"?`)) return;
+            deleteLibraryEntry(row.original.id)
+              .then(() => onDeleteEntry(row.original.id))
+              .catch(() => window.alert("Failed to delete entry. Please try again."));
+          }}
+        >
+          <Trash2 size={14} />
+        </button>
       ),
-      meta: { width: 140 },
+      meta: { width: 40 },
     }),
   ];
 

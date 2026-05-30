@@ -47,6 +47,10 @@ export function LibraryPage() {
     setSelectedEntry(entry);
   }, []);
 
+  const handleDeleteEntry = useCallback((_id: string) => {
+    refetch();
+  }, [refetch]);
+
   return (
     <div className="space-y-5">
       <PullIndicator distance={pullDistance} />
@@ -150,6 +154,7 @@ export function LibraryPage() {
           total={total}
           loading={loading}
           onEntryClick={handleEntryClick}
+          onDeleteEntry={handleDeleteEntry}
         />
       ) : urlState.view === "cards" ? (
         <CardView entries={entries} onEntryClick={handleEntryClick} />
