@@ -3,9 +3,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
-  type SortingState,
 } from "@tanstack/react-table";
 import type { LibraryEntry } from "@/types";
 
@@ -21,7 +19,6 @@ interface TableViewProps {
 export function TableView({ entries, total: _total, loading, onEntryClick }: TableViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- total reserved for future bulk actions
   void _total;
-  const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
@@ -107,11 +104,9 @@ export function TableView({ entries, total: _total, loading, onEntryClick }: Tab
   const table = useReactTable({
     data: entries,
     columns,
-    state: { sorting, rowSelection },
-    onSortingChange: setSorting,
+    state: { rowSelection },
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   const handleRowClick = useCallback((entry: LibraryEntry) => {
@@ -133,25 +128,8 @@ export function TableView({ entries, total: _total, loading, onEntryClick }: Tab
                     style={{ width: width ?? "auto" }}
                   >
                     {header.isPlaceholder ? null : (
-                      <div
-                        className={`flex items-center gap-1 select-none ${
-                          header.column.getCanSort() ? "cursor-pointer hover:text-text" : ""
-                        }`}
-                        onClick={header.column.getToggleSortingHandler()}
-                        aria-sort={
-                          header.column.getIsSorted() === "asc"
-                            ? "ascending"
-                            : header.column.getIsSorted() === "desc"
-                            ? "descending"
-                            : "none"
-                        }
-                      >
+                      <div className="flex items-center gap-1 select-none">
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === "asc" ? (
-                          <span className="text-accent">&#9650;</span>
-                        ) : header.column.getIsSorted() === "desc" ? (
-                          <span className="text-accent">&#9660;</span>
-                        ) : null}
                       </div>
                     )}
                   </th>
