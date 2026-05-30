@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useOfflineCache } from "./useOfflineCache";
 import {
   apiGet,
@@ -247,24 +247,36 @@ export function useLibraryEntries(filters: LibraryFilters = {}) {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
+  // Capture latest filters in a ref so the refetch callback always uses current values
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  const refetch = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetchLibraryEntries(filters);
+      const res = await fetchLibraryEntries(filtersRef.current);
       setData(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load library entries");
     } finally {
       setLoading(false);
     }
-  }, [filters.search, filters.section, filters.tag, filters.status, filters.sort, filters.order, filters.page, filters.per_page]);
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    fetchLibraryEntries(filters).then(
+      (res) => { if (!cancelled) { setData(res); setLoading(false); } },
+      (e: unknown) => { if (!cancelled) { setError(e instanceof Error ? e.message : "Failed to load library entries"); setLoading(false); } },
+    );
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.section, filters.tag, filters.status, filters.sort, filters.order, filters.page, filters.per_page]);
 
-  return { data, error, loading, refetch: fetchData };
+  return { data, error, loading, refetch };
 }
 
 export function useLibraryEntry(id: string | null) {
