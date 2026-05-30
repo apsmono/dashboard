@@ -64,6 +64,11 @@ export interface LibraryEntry {
   path: string;
   markdown?: string;
   related?: string[];
+  thumbnail_url?: string;    // YouTube thumbnail or og_image URL; derived client-side or server-side
+  og_image?: string;         // Open Graph image URL from source page (Phase 6 use)
+  ai_summary?: string;       // Short AI-generated summary (Phase 5 Smart Feeds use)
+  summary?: string;          // Human-edited or AI-generated summary text
+  platform?: string;         // e.g. "youtube", "github", "generic" (Phase 5/6 feed cards)
 }
 
 export interface LibraryListResponse {
