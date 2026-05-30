@@ -183,6 +183,11 @@ export async function updateLibraryEntry(
   return apiPut<{ status: string; id: string }>(`/api/v1/library/entries/${encodeURIComponent(id)}`, body);
 }
 
+export async function deleteLibraryEntry(id: string): Promise<{ status: string; id: string }> {
+  return apiDelete<{ status: string; id: string }>(`/api/v1/library/entries/${encodeURIComponent(id)}`);
+}
+
+// Synthesize: POST /api/v1/library/entries/{id}/synthesize — confirmed correct 2026-05-30
 export async function synthesizeEntry(
   id: string,
   query: string
