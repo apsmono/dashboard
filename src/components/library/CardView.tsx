@@ -1,7 +1,9 @@
-import { ExternalLink, Clock } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ExternalLink, Clock, MoreHorizontal, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import type { LibraryEntry } from "@/types";
+import { deleteLibraryEntry } from "@/lib/api";
 import {
   platformIcon,
   platformLabel,
@@ -13,18 +15,82 @@ import {
 interface CardViewProps {
   entries: LibraryEntry[];
   onEntryClick: (entry: LibraryEntry) => void;
+  onDeleteEntry: (id: string) => void;
+  openMenuId: string | null;
+  setOpenMenuId: (id: string | null) => void;
 }
 
-export function CardView({ entries, onEntryClick }: CardViewProps) {
+export function CardView({ entries, onEntryClick, onDeleteEntry, openMenuId, setOpenMenuId }: CardViewProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on click-outside
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [openMenuId, setOpenMenuId]);
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {entries.map((entry, idx) => (
         <Card
           key={entry.id}
-          className={`group cursor-pointer overflow-hidden rounded-lg border-l-4 p-0 hover-glow ${sectionAccentColor(entry.section)}`}
+          className={`group relative cursor-pointer overflow-hidden rounded-lg border-l-4 p-0 hover-glow ${sectionAccentColor(entry.section)}`}
           style={{ animationDelay: `${idx * 50}ms` }}
           onClick={() => onEntryClick(entry)}
         >
+          {/* Hover-reveal overflow menu button */}
+          <button
+            className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-muted hover:text-text hover:bg-surface z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenuId(openMenuId === entry.id ? null : entry.id);
+            }}
+            aria-label={`Entry actions for ${entry.title}`}
+          >
+            <MoreHorizontal size={16} />
+          </button>
+
+          {/* Menu panel */}
+          {openMenuId === entry.id && (
+            <div
+              ref={menuRef}
+              className="absolute top-10 right-2 z-50 w-40 bg-surface border border-border rounded-md shadow-lg py-1"
+              data-menu
+            >
+              {entry.source_url && (
+                <button
+                  className="flex items-center gap-2 w-full px-3 h-10 text-sm text-text hover:bg-surface/80 text-left"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(entry.source_url, "_blank");
+                    setOpenMenuId(null);
+                  }}
+                >
+                  <ExternalLink size={14} /> Open source URL
+                </button>
+              )}
+              <button
+                className="flex items-center gap-2 w-full px-3 h-10 text-sm text-danger hover:bg-danger/10 text-left"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!window.confirm(`Delete "${entry.title}"? This cannot be undone.`)) return;
+                  deleteLibraryEntry(entry.id)
+                    .then(() => onDeleteEntry(entry.id))
+                    .catch(() => window.alert("Failed to delete entry. Please try again."));
+                  setOpenMenuId(null);
+                }}
+              >
+                <Trash2 size={14} /> Delete entry
+              </button>
+            </div>
+          )}
+
           {/* YouTube thumbnail */}
           {(() => {
             const thumb = youtubeThumbnail(entry.source_url);

@@ -37,6 +37,7 @@ export function LibraryPage() {
 
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const handleRefetch = useCallback(() => {
     setUrlState({ page: 1 });
@@ -157,7 +158,7 @@ export function LibraryPage() {
           onDeleteEntry={handleDeleteEntry}
         />
       ) : urlState.view === "cards" ? (
-        <CardView entries={entries} onEntryClick={handleEntryClick} />
+        <CardView entries={entries} onEntryClick={handleEntryClick} onDeleteEntry={handleDeleteEntry} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} />
       ) : (
         <CompactListView entries={entries} onEntryClick={handleEntryClick} />
       )}
