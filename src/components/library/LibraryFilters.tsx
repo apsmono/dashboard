@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
-  Tag,
   Shuffle,
   X,
   ChevronDown,
@@ -51,6 +50,7 @@ export function LibraryFilters({
   const [searchInput, setSearchInput] = useState(urlState.search);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [showAllTags, setShowAllTags] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   /* Sync searchInput from urlState when cleared externally */
   useEffect(() => {
@@ -217,76 +217,135 @@ export function LibraryFilters({
         </div>
       </div>
 
-      {/* Row 2: Section filter pills */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter size={13} className="text-muted shrink-0" />
+      {/* Filter button */}
+      <div className="flex items-center gap-2">
         <button
-          onClick={() => onStateChange({ section: "" })}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-            urlState.section === ""
-              ? "bg-accent text-black"
-              : "bg-surface text-muted hover:text-text border border-border"
+          onClick={() => setFilterModalOpen(true)}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            activeFilterCount > 0
+              ? "border-accent/40 bg-accent/10 text-accent"
+              : "border-border bg-card text-muted hover:text-text hover:border-accent/40"
           }`}
         >
-          All
+          <Filter size={13} />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-0.5 rounded-full bg-accent text-black text-[10px] font-semibold w-4 h-4 flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
         </button>
-        {sections.map((s) => (
-          <button
-            key={s}
-            onClick={() => onStateChange({ section: s })}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-              urlState.section === s
-                ? "bg-accent text-black"
-                : "bg-surface text-muted hover:text-text border border-border"
-            }`}
-          >
-            {s}
-          </button>
-        ))}
         {activeFilterCount > 0 && (
           <button
             onClick={clearFilters}
-            className="ml-auto flex items-center gap-1 rounded-md border border-danger/30 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors"
+            className="flex items-center gap-1 rounded-md border border-danger/30 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors"
           >
             <X size={11} />
-            Clear filters
+            Clear
           </button>
         )}
       </div>
 
-      {/* Row 3: Tag filter pills */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Tag size={11} className="text-muted shrink-0 mr-0.5" />
-          <button
-            onClick={() => onStateChange({ tag: "" })}
-            className={`rounded-md px-2 py-0.5 text-xs transition-all ${
-              urlState.tag === "" ? "bg-accent text-black font-medium" : "text-muted hover:text-text bg-surface/50"
-            }`}
+      {/* Filter modal */}
+      {filterModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setFilterModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-xl max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
           >
-            any
-          </button>
-          {(showAllTags ? tags : tags.slice(0, 16)).map((t) => (
-            <button
-              key={t}
-              onClick={() => onStateChange({ tag: t })}
-              className={`rounded-md px-2 py-0.5 text-xs transition-all ${
-                urlState.tag === t
-                  ? "bg-accent text-black font-medium"
-                  : "text-muted hover:text-text bg-surface/50"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-          {tags.length > 16 && (
-            <button
-              onClick={() => setShowAllTags((v) => !v)}
-              className="rounded-md px-2 py-0.5 text-xs text-accent hover:underline"
-            >
-              {showAllTags ? "less" : `+${tags.length - 16} more`}
-            </button>
-          )}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-sm font-semibold text-text">Filters</h3>
+              <button
+                onClick={() => setFilterModalOpen(false)}
+                className="text-muted hover:text-text transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Sections */}
+            <div className="mb-5">
+              <h4 className="text-xs font-medium text-muted mb-2">Section</h4>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => onStateChange({ section: "" })}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                    urlState.section === ""
+                      ? "bg-accent text-black"
+                      : "bg-surface text-muted hover:text-text border border-border"
+                  }`}
+                >
+                  All
+                </button>
+                {sections.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => onStateChange({ section: s })}
+                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                      urlState.section === s
+                        ? "bg-accent text-black"
+                        : "bg-surface text-muted hover:text-text border border-border"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-medium text-muted mb-2">Tags</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => onStateChange({ tag: "" })}
+                    className={`rounded-md px-2 py-0.5 text-xs transition-all ${
+                      urlState.tag === "" ? "bg-accent text-black font-medium" : "text-muted hover:text-text bg-surface/50"
+                    }`}
+                  >
+                    any
+                  </button>
+                  {(showAllTags ? tags : tags.slice(0, 24)).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => onStateChange({ tag: t })}
+                      className={`rounded-md px-2 py-0.5 text-xs transition-all ${
+                        urlState.tag === t
+                          ? "bg-accent text-black font-medium"
+                          : "text-muted hover:text-text bg-surface/50"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                  {tags.length > 24 && (
+                    <button
+                      onClick={() => setShowAllTags((v) => !v)}
+                      className="rounded-md px-2 py-0.5 text-xs text-accent hover:underline"
+                    >
+                      {showAllTags ? "less" : `+${tags.length - 24} more`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            {activeFilterCount > 0 && (
+              <div className="flex justify-end pt-3 border-t border-border">
+                <button
+                  onClick={() => { clearFilters(); setFilterModalOpen(false); }}
+                  className="text-xs text-danger hover:underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
