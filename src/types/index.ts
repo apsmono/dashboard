@@ -73,12 +73,16 @@ export interface LibraryListResponse {
   per_page: number;
 }
 
+export type ViewMode = "cards" | "compact" | "table";
+
 export interface LibraryFilters {
   search?: string;
   section?: string;
   tag?: string;
   status?: string;
   source_url?: string;
+  sort?: string;
+  order?: string;
   page?: number;
   per_page?: number;
 }
