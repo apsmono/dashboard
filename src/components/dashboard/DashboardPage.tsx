@@ -13,6 +13,7 @@ import { LayoutSettingsPanel } from "@/components/layout/LayoutSettingsPanel";
 import { ZenShell } from "@/components/zen/ZenShell";
 import { ClarityBoard } from "@/components/zen/ClarityBoard";
 import type { ZenView } from "@/components/zen/types";
+import { routeToTabState, tabStateToRoute } from "@/lib/dashboardRoutes";
 import { sendCommand, sendGuideCommand } from "@/lib/api";
 import { flushMutationQueue } from "@/lib/sync";
 import {
@@ -72,8 +73,48 @@ export function DashboardPage() {
 
 function DashboardPageContent() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
-  const [zenView, setZenView] = useState<ZenView>("core");
-  const [moreTab, setMoreTab] = useState<string | null>(null);
+  // Hydrate initial tab state from the URL hash so refresh/deep-link lands on the
+  // correct tab. App.tsx only renders DashboardPageContent when routeToTabState is
+  // non-null, so `initial` will always be non-null here; the fallback is a safety guard.
+  const [zenView, setZenView] = useState<ZenView>(() => {
+    const initial = routeToTabState(window.location.hash) ?? { zenView: "core", moreTab: null };
+    return initial.zenView;
+  });
+  const [moreTab, setMoreTab] = useState<string | null>(() => {
+    const initial = routeToTabState(window.location.hash) ?? { zenView: "core", moreTab: null };
+    return initial.moreTab;
+  });
+  // Write the URL hash whenever zenView or moreTab changes so that refreshing
+  // or bookmarking the page lands on the correct tab (write-side of Task 3).
+  //
+  // Rules:
+  // - tabStateToRoute returns "/library" for the library tab. We only write
+  //   "#/library" on ARRIVAL (when the current hash does not already start
+  //   with "#/library"). This lets useLibraryUrlState own "#/library?..."
+  //   (view/sort/search/page) while the user stays on the Library tab, but
+  //   ensures the base route is set when navigating here from another tab.
+  // - Use replaceState (not pushState) to avoid flooding browser history on
+  //   every tab click — consistent with useLibraryUrlState's own approach.
+  // - replaceState does NOT fire hashchange, so App.tsx's listener is not
+  //   triggered and DashboardPage does not remount.
+  // - Guard: skip the write if the hash already equals the target route to
+  //   prevent a redundant replaceState on the very first render (Task 3
+  //   already hydrated the state from the hash, so they already match).
+  useEffect(() => {
+    const route = tabStateToRoute({ zenView, moreTab });
+    const target = `#${route}`;
+    // Library arrival guard: only write "#/library" when not already on a
+    // library route (e.g. "#/library?entry=...&view=table"). useLibraryUrlState
+    // owns the query string once you are on the Library tab.
+    if (route === "/library") {
+      const currentHash = window.location.hash.toLowerCase();
+      if (currentHash.startsWith("#/library")) return;
+    }
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
+    }
+  }, [zenView, moreTab]);
+
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileGuideOpen, setMobileGuideOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
@@ -272,7 +313,14 @@ function DashboardPageContent() {
       ) : (
         <ClarityBoard
           activeView={zenView}
-          onViewChange={setZenView}
+          onViewChange={(view) => {
+            // Clear moreTab so that tabStateToRoute produces the correct
+            // canonical route for the selected top-level view. Without this
+            // a stale moreTab causes the write-effect to emit e.g. "/graph"
+            // instead of "/" when the user clicks "Core Dashboard".
+            setZenView(view);
+            setMoreTab(null);
+          }}
           selectedCardId={selectedCardId}
           onSelectCard={setSelectedCardId}
           onContextAction={(actionId) => {
