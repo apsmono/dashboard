@@ -258,7 +258,7 @@ export function useLibraryEntries(filters: LibraryFilters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [filters.search, filters.section, filters.tag, filters.status, filters.page, filters.per_page]);
+  }, [filters.search, filters.section, filters.tag, filters.status, filters.sort, filters.order, filters.page, filters.per_page]);
 
   useEffect(() => {
     fetchData();
