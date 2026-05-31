@@ -24,6 +24,7 @@ export function IdentityBox({ initialText = "", onProfileParsed, onNext, onTextC
   const [loading, setLoading] = useState(false);
   const [followupQuestion, setFollowupQuestion] = useState<string | null>(null);
   const [hasFollowup, setHasFollowup] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleTextChange(value: string) {
     setText(value);
@@ -32,17 +33,24 @@ export function IdentityBox({ initialText = "", onProfileParsed, onNext, onTextC
 
   async function handleSubmit() {
     if (!text.trim()) return;
+    setError(null);
     setLoading(true);
 
     try {
       const res = await parseIdentity(text.trim());
+
+      // CR-01 frontend guard: reject non-ok or empty profile — stay on Step 1
+      if (res.status !== "ok" || !res.profile) {
+        setError("I couldn't analyze that right now. Please try again.");
+        return;
+      }
+
       const parsed = res.profile as ProfileData;
 
       if (parsed.needs_followup && !hasFollowup) {
         // Show follow-up question — user will submit again
         setFollowupQuestion(parsed.followup_question || "Could you tell me a bit more about what you do?");
         setHasFollowup(true);
-        setLoading(false);
         return;
       }
 
@@ -50,7 +58,10 @@ export function IdentityBox({ initialText = "", onProfileParsed, onNext, onTextC
       onProfileParsed(parsed);
       onNext();
     } catch {
-      // On error, continue silently — user can retry
+      // parseIdentity rejects on non-2xx (e.g. 502 from backend) — surface the error
+      setError("I couldn't analyze that right now. Please try again.");
+    } finally {
+      // CR-02: reset loading on every exit path (success, follow-up, error)
       setLoading(false);
     }
   }
@@ -61,6 +72,10 @@ export function IdentityBox({ initialText = "", onProfileParsed, onNext, onTextC
       <p className="text-sm text-muted mb-6">
         Tell me what you do and what overwhelms you. I'll set things up.
       </p>
+
+      {error && (
+        <p className="text-sm text-red-500 mb-4">{error}</p>
+      )}
 
       {followupQuestion && (
         <div className="bg-surface border border-border rounded-lg p-4 mb-4 flex gap-3">
