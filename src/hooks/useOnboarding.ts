@@ -83,6 +83,11 @@ export function useOnboarding() {
         } catch {
           // Non-blocking
         }
+      } else {
+        // CR-05: log so the dropped save is observable — avoids silent re-onboarding loop
+        console.error(
+          "[onboarding] handleComplete called with no profile to save — onboarding marked complete without persisting a profile; first-run detection may re-trigger on next load."
+        );
       }
       setOnboardingState("complete");
     },
