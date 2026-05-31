@@ -1,8 +1,11 @@
 /**
  * InstantWinDigest — Step 3 of the onboarding wizard.
  *
- * Shows the owner's first 3-bullet digest. On cold start (no connected apps),
- * shows a capability preview instead. "Get started" transitions to Zen shell.
+ * Shows the owner's first 3-bullet digest. The preview/live label is driven
+ * by the backend `mode` flag returned from GET /api/v1/onboarding/digest:
+ *   - mode="live"    → real data was fetched; label "Your first digest" / "Last 24 hours"
+ *   - mode="preview" → cold-start capability preview; label "Preview" / "What Signal will do for you"
+ * This closes SC-3 / ONB-04 (honest labeling) and WR-02 (unsafe profile cast removed).
  * Per D-12, D-13, D-14, D-15.
  */
 
@@ -23,19 +26,12 @@ const FALLBACK_BULLETS = [
   "Your personalized digest will appear here.",
 ];
 
-function isColdStart(profile: ProfileData | null): boolean {
-  if (!profile) return true;
-  const connected = (profile as unknown as { connected_apps?: string[] }).connected_apps;
-  return !connected || connected.length === 0;
-}
-
-export function InstantWinDigest({ profile, onComplete }: InstantWinDigestProps) {
+export function InstantWinDigest({ profile: _profile, onComplete }: InstantWinDigestProps) {
   const [bullets, setBullets] = useState<string[]>([]);
+  const [mode, setMode] = useState<"live" | "preview">("preview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [visible, setVisible] = useState(false);
-
-  const coldStart = isColdStart(profile);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,12 +41,14 @@ export function InstantWinDigest({ profile, onComplete }: InstantWinDigestProps)
         const data = await fetchDigest();
         if (!cancelled) {
           setBullets((data.bullets ?? []).slice(0, 3));
+          setMode(data.mode ?? "preview");
           setLoading(false);
           // Trigger entrance animation after a tick
           requestAnimationFrame(() => setVisible(true));
         }
       } catch {
         if (!cancelled) {
+          // On error, keep mode="preview" (fallback content is not live data)
           setError(true);
           setBullets(FALLBACK_BULLETS);
           setLoading(false);
@@ -74,6 +72,8 @@ export function InstantWinDigest({ profile, onComplete }: InstantWinDigestProps)
     );
   }
 
+  const isPreview = mode === "preview";
+
   // Ensure exactly 3 bullets
   const displayBullets = bullets.length >= 3 ? bullets.slice(0, 3) : [
     ...bullets,
@@ -89,8 +89,10 @@ export function InstantWinDigest({ profile, onComplete }: InstantWinDigestProps)
         transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
       }}
     >
-      {coldStart && (
-        <p className="text-xs text-muted font-medium">Here's what I'll do for you</p>
+      {isPreview && (
+        <p className="text-xs text-muted font-medium">
+          Here's what I'll do for you — connect an app to see your live 24-hour digest.
+        </p>
       )}
 
       {error && (
@@ -106,9 +108,11 @@ export function InstantWinDigest({ profile, onComplete }: InstantWinDigestProps)
         <div className="flex items-center justify-between mb-3">
           <span className="inline-flex items-center gap-1.5 text-xs text-muted font-medium">
             <Sparkles size={14} className="text-accent" />
-            Your first digest
+            {isPreview ? "Preview" : "Your first digest"}
           </span>
-          <span className="text-xs text-muted">Last 24 hours</span>
+          <span className="text-xs text-muted">
+            {isPreview ? "What Signal will do for you" : "Last 24 hours"}
+          </span>
         </div>
 
         <ul className="flex flex-col gap-1">

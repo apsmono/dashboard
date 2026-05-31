@@ -533,6 +533,6 @@ export async function connectApp(appName: string): Promise<{ status: string; mes
   return apiPost<{ status: string; message?: string }>("/api/v1/onboarding/connect-app", { app: appName });
 }
 
-export async function fetchDigest(): Promise<{ status: string; bullets: string[] }> {
-  return apiGet<{ status: string; bullets: string[] }>("/api/v1/onboarding/digest");
+export async function fetchDigest(): Promise<{ status: string; bullets: string[]; mode: "live" | "preview" }> {
+  return apiGet<{ status: string; bullets: string[]; mode: "live" | "preview" }>("/api/v1/onboarding/digest");
 }
