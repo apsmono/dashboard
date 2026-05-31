@@ -1,10 +1,12 @@
 import { useState, Suspense, lazy, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useViewMode } from "@/hooks/useViewMode";
 import { useMutationQueue } from "@/hooks/useMutationQueue";
 import { useZenContextualActions } from "@/hooks/useZenContextualActions";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardCheatsheet } from "./KeyboardCheatsheet";
 import { AIGuidePanel, type GuideMessage } from "@/components/guide/AIGuidePanel";
@@ -73,6 +75,16 @@ export function DashboardPage() {
 
 function DashboardPageContent() {
   const { user, loading, signOut, isAuthenticated } = useAuth();
+  const {
+    onboardingState,
+    onboardingStep,
+    profile: onboardingProfile,
+    identityText,
+    setIdentityText,
+    handleProfileParsed,
+    handleStepChange,
+    handleComplete,
+  } = useOnboarding();
   // Hydrate initial tab state from the URL hash so refresh/deep-link lands on the
   // correct tab. App.tsx only renders DashboardPageContent when routeToTabState is
   // non-null, so `initial` will always be non-null here; the fallback is a safety guard.
@@ -184,7 +196,7 @@ function DashboardPageContent() {
 
   useKeyboardShortcuts(keyboardTab, handleTabChange, focusSearch, undefined, () => setCheatsheetOpen(true));
 
-  if (loading) {
+  if (loading || onboardingState === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -286,7 +298,17 @@ function DashboardPageContent() {
         }}
       />
 
-      {moreTab ? (
+      {onboardingState === "onboarding" ? (
+        <OnboardingWizard
+          step={onboardingStep}
+          profile={onboardingProfile}
+          identityText={identityText}
+          onStepChange={handleStepChange}
+          onComplete={handleComplete}
+          onProfileParsed={handleProfileParsed}
+          onIdentityTextChange={setIdentityText}
+        />
+      ) : moreTab ? (
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-16">

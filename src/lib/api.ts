@@ -498,3 +498,33 @@ export async function fetchGuideStatus(): Promise<{ status: string; metrics: Rec
 export async function parkDistraction(text: string): Promise<{ status: string; entry_id?: string; message?: string }> {
   return apiPost<{ status: string; entry_id?: string; message?: string }>("/api/v1/guide/park", { text });
 }
+
+// ---------------------------------------------------------------------------
+// Onboarding API
+// ---------------------------------------------------------------------------
+
+export interface ParsedProfile {
+  role: string;
+  pain_points: string[];
+  suggested_apps: string[];
+  context_templates: string[];
+  needs_followup: boolean;
+  followup_question: string;
+  onboarding_step?: number;
+}
+
+export async function parseIdentity(text: string): Promise<{ status: string; profile: ParsedProfile }> {
+  return apiPost<{ status: string; profile: ParsedProfile }>("/api/v1/onboarding/parse-identity", { text });
+}
+
+export async function fetchProfile(): Promise<{ status: string; profile: ParsedProfile }> {
+  return apiGet<{ status: string; profile: ParsedProfile }>("/api/v1/profile");
+}
+
+export async function saveProfile(profile: ParsedProfile): Promise<{ status: string; profile: ParsedProfile }> {
+  return apiPost<{ status: string; profile: ParsedProfile }>("/api/v1/profile", profile);
+}
+
+export async function saveOnboardingStep(step: number): Promise<{ status: string }> {
+  return apiPost<{ status: string }>("/api/v1/profile/onboarding-step", { step });
+}
