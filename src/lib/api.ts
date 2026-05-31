@@ -528,3 +528,11 @@ export async function saveProfile(profile: ParsedProfile): Promise<{ status: str
 export async function saveOnboardingStep(step: number): Promise<{ status: string }> {
   return apiPost<{ status: string }>("/api/v1/profile/onboarding-step", { step });
 }
+
+export async function connectApp(appName: string): Promise<{ status: string; message?: string }> {
+  return apiPost<{ status: string; message?: string }>("/api/v1/onboarding/connect-app", { app: appName });
+}
+
+export async function fetchDigest(): Promise<{ status: string; bullets: string[] }> {
+  return apiGet<{ status: string; bullets: string[] }>("/api/v1/onboarding/digest");
+}
