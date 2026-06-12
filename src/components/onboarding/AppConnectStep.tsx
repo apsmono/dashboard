@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { Mail, Youtube, Rss, CheckCircle, Loader2 } from "lucide-react";
+import { Mail, Video, Rss, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { connectApp } from "@/lib/api";
 
@@ -19,7 +19,7 @@ interface AppConnectStepProps {
 
 const APP_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   gmail: Mail,
-  youtube: Youtube,
+  youtube: Video,
 };
 
 const APP_DESCRIPTIONS: Record<string, string> = {
@@ -84,6 +84,9 @@ export function AppConnectStep({ suggestedApps, onSkip, onConnected }: AppConnec
 
   function handleSkip() {
     setSkipped(true);
+    // Notify the wizard (advances past this step) — was previously never called,
+    // leaving "Skip for now" to mislabel the flow via onConnected.
+    onSkip();
   }
 
   return (
