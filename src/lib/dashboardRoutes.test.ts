@@ -34,6 +34,10 @@ describe("routeToTabState", () => {
   });
 
   // More-tab routes
+  it('"/applications" → { zenView: "core", moreTab: "applications" }', () => {
+    expect(routeToTabState("/applications")).toEqual({ zenView: "core", moreTab: "applications" });
+  });
+
   it('"/graph" → { zenView: "core", moreTab: "graph" }', () => {
     expect(routeToTabState("/graph")).toEqual({ zenView: "core", moreTab: "graph" });
   });

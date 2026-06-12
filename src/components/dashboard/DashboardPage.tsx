@@ -35,6 +35,7 @@ import {
   MoreHorizontal,
   X,
   Settings,
+  Briefcase,
 } from "lucide-react";
 
 const GraphPage = lazy(() => import("@/components/graph/GraphPage").then((m) => ({ default: m.GraphPage })));
@@ -43,6 +44,9 @@ const AnalysisPage = lazy(() => import("@/components/analysis/AnalysisPage").the
 const CalendarPage = lazy(() => import("@/components/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage })));
 const Commands = lazy(() => import("./Commands").then((m) => ({ default: m.Commands })));
 const Reminders = lazy(() => import("./Reminders").then((m) => ({ default: m.Reminders })));
+const ApplicationsPage = lazy(() =>
+  import("@/components/applications/ApplicationsPage").then((m) => ({ default: m.ApplicationsPage }))
+);
 
 const MOBILE_TABS: { id: ZenView | "guide" | "more"; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "core", label: "Home", icon: LayoutDashboard },
@@ -52,6 +56,7 @@ const MOBILE_TABS: { id: ZenView | "guide" | "more"; label: string; icon: typeof
 ];
 
 const MORE_TABS = [
+  { id: "applications", label: "Applications", icon: Briefcase },
   { id: "graph", label: "Graph", icon: GitBranch },
   { id: "timeline", label: "Timeline", icon: Calendar },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
@@ -324,6 +329,7 @@ function DashboardPageContent() {
             >
               ← Back to Clarity Board
             </button>
+            {moreTab === "applications" && <ApplicationsPage />}
             {moreTab === "graph" && <GraphPage />}
             {moreTab === "timeline" && <TimelinePage />}
             {moreTab === "analysis" && <AnalysisPage />}

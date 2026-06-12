@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Deploy: Firebase console → Firestore → Rules (project: apsmono-projects),
+// or `firebase deploy --only firestore:rules`.
+// Single-user app: only the owner's signed-in Google account may touch data.
+// ⚠ Confirm which account you actually sign in with and trim this list.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email_verified
+        && request.auth.token.email in [
+          "apsmono2019@gmail.com",
+          "arifekopramono@gmail.com"
+        ];
+    }
+
+    match /applications/{id} {
+      allow read, write: if isOwner();
+    }
+
+    // Default deny for everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

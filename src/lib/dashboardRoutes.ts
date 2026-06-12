@@ -12,6 +12,7 @@ export interface TabState {
  * and stay in sync without duplication.
  */
 export const MORE_TAB_SEGMENTS = new Set([
+  "applications",
   "graph",
   "timeline",
   "analysis",
