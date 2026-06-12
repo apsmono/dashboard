@@ -1,14 +1,25 @@
+import type { Project } from "@/types";
+
 export const siteConfig = {
   name: "Arif Eko Pramono",
-  tagline: "Backend engineer building automation tools and AI-driven systems from Berlin, Germany.",
-  email: "arifekopramono@gmail.com",
+  tagline: "Fullstack developer — React, React Native & Firebase — building reliable product systems and AI agents, remote from Indonesia.",
+  email: "arifekop@ymail.com",
   avatar: "https://avatars.githubusercontent.com/u/51656350?v=4",
-  location: "Berlin, Germany",
+  location: "Blitar, East Java, Indonesia",
   bio: [
-    "I'm a backend engineer based in Berlin, Germany, passionate about Data Processing, Data Analytics, Artificial Intelligence, and Automation. I love turning complex problems into clean, efficient code that actually ships.",
-    "I build systems that connect tools and automate workflows — from Python scrapers and FastAPI backends to React frontends and Firebase-powered dashboards. When I'm not coding, I'm probably optimizing my personal operating system or exploring new tech.",
+    "I'm a fullstack developer from Blitar, East Java, Indonesia, with ~4 years building and operating a two-sided travel marketplace end to end on React, React Native, and Firebase. I'm at my best making fragile, production-critical systems trustworthy — migrating live data shapes safely, hardening publish flows, and fixing transactional money bugs.",
+    "On the side I build autonomous AI agent systems with real cost guardrails, plus the automation glue of my own personal operating system — Python scrapers, FastAPI backends, and React dashboards like this one.",
   ],
   projects: [
+    {
+      name: "Intel Digest",
+      description:
+        "Autonomous AI research agent that produces a weekly competitor/market brief and emails it. Token & tool-call budget guardrails, idempotent scheduled runs, model routing. Working build — not yet launched.",
+      tags: ["Python", "CrewAI", "Cloud Run", "Firestore"],
+      sourceUrl: "https://github.com/apsmono/mas-agentic",
+      icon: "Newspaper",
+      status: "active",
+    },
     {
       name: "Solo Leveling",
       description:
@@ -16,6 +27,7 @@ export const siteConfig = {
       tags: ["Python", "FastAPI", "Docker", "PostgreSQL"],
       sourceUrl: "https://github.com/apsmono/projects",
       icon: "Brain",
+      status: "active",
     },
     {
       name: "Wedding Invitation",
@@ -25,6 +37,7 @@ export const siteConfig = {
       liveUrl: "https://apsmono.github.io/wedding-invitation/",
       sourceUrl: "https://github.com/apsmono/wedding-invitation",
       icon: "Heart",
+      status: "shipped",
     },
     {
       name: "Koperasi KKS",
@@ -33,6 +46,7 @@ export const siteConfig = {
       tags: ["HTML5", "CSS3", "JavaScript"],
       sourceUrl: "https://github.com/apsmono/koperasi",
       icon: "Landmark",
+      status: "shipped",
     },
     {
       name: "makeICS",
@@ -41,6 +55,7 @@ export const siteConfig = {
       tags: ["Python", "iCalendar"],
       sourceUrl: "https://github.com/apsmono/makeICS",
       icon: "CalendarDays",
+      status: "shipped",
     },
     {
       name: "Scrapers",
@@ -48,7 +63,8 @@ export const siteConfig = {
         "Python automation scripts for data collection and processing. Modular scrapers with environment-based config and clean logging.",
       tags: ["Python", "Automation"],
       sourceUrl: "https://github.com/apsmono/projects",
-      icon: "Spider",
+      icon: "Bug",
+      status: "active",
     },
     {
       name: "Portfolio Dashboard",
@@ -58,8 +74,9 @@ export const siteConfig = {
       liveUrl: "https://dashboard.apsmono.com/",
       sourceUrl: "https://github.com/apsmono/dashboard",
       icon: "LayoutDashboard",
+      status: "active",
     },
-  ],
+  ] satisfies Project[],
   skills: [
     { name: "Python", icon: "Code2" },
     { name: "FastAPI", icon: "Zap" },
@@ -75,11 +92,11 @@ export const siteConfig = {
     { name: "Linux", icon: "Terminal" },
     { name: "HTML5", icon: "Code" },
     { name: "CSS3", icon: "Paintbrush" },
-    { name: "Microservices", icon: "Boxes" },
+    { name: "React Native", icon: "Smartphone" },
     { name: "Automation", icon: "Cog" },
   ],
   contacts: [
-    { label: "Email", value: "arifekopramono@gmail.com", href: "mailto:arifekopramono@gmail.com", icon: "Mail" },
+    { label: "Email", value: "arifekop@ymail.com", href: "mailto:arifekop@ymail.com", icon: "Mail" },
     { label: "GitHub", value: "@apsmono", href: "https://github.com/apsmono", icon: "Github" },
     { label: "Instagram", value: "@apsmono", href: "https://instagram.com/apsmono", icon: "Instagram" },
     { label: "Threads", value: "@apsmono", href: "https://threads.net/@apsmono", icon: "AtSign" },
