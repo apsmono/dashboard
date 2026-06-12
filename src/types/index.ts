@@ -30,6 +30,8 @@ export interface DashboardStats {
   integrations: Record<string, boolean>;
 }
 
+export type ProjectStatus = "shipped" | "active" | "wip";
+
 export interface Project {
   name: string;
   description: string;
@@ -37,6 +39,8 @@ export interface Project {
   liveUrl?: string;
   sourceUrl: string;
   icon: string;
+  /** Editorial status shown as a badge; last-push date comes live from GitHub. */
+  status?: ProjectStatus;
 }
 
 export interface Skill {
