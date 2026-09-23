@@ -1,0 +1,81 @@
+rules_version = '2';
+
+// One Firestore database shared by every project in the apsmono/projects workspace.
+// Collections are project-prefixed (see firebase/shared/collections.ts) except the
+// grandfathered solo-leveling collections `reminders` and `commands`.
+//
+// IMPORTANT: the solo-leveling FastAPI backend writes via the Admin SDK, which BYPASSES
+// these rules entirely. These rules only constrain client SDK access (browsers, apps).
+// Server-side validation still lives in FastAPI.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers -------------------------------------------------------
+    // Admin = the single owner. Set once via Admin SDK custom claim:
+    //   firebase_admin.auth.set_custom_user_claims(uid, {"admin": True})
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isNonEmptyString(v, maxLen) {
+      return v is string && v.size() > 0 && v.size() <= maxLen;
+    }
+
+    // ---- solo-leveling (grandfathered, owner-only) ---------------------
+    // Locked to admin so stray browser clients can't touch brain data.
+    // The backend uses the Admin SDK and is unaffected.
+    match /reminders/{doc} {
+      allow read, write: if isAdmin();
+    }
+    match /commands/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---- wedding-invitation -------------------------------------------
+    // Public RSVP submission with strict validation; only the owner can read.
+    match /wedding_rsvps/{doc} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['name', 'attending', 'guests', 'message', 'created_at'])
+                    && isNonEmptyString(request.resource.data.name, 120)
+                    && request.resource.data.attending is bool
+                    && request.resource.data.guests is int
+                    && request.resource.data.guests >= 0
+                    && request.resource.data.guests <= 20
+                    && (!('message' in request.resource.data)
+                        || request.resource.data.message is string
+                        && request.resource.data.message.size() <= 2000);
+      allow update, delete: if false;
+    }
+    match /wedding_guestbook/{doc} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'message', 'created_at'])
+                    && isNonEmptyString(request.resource.data.name, 120)
+                    && isNonEmptyString(request.resource.data.message, 2000);
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- koperasi ------------------------------------------------------
+    match /koperasi_contacts/{doc} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['name', 'email', 'phone', 'message', 'created_at'])
+                    && isNonEmptyString(request.resource.data.name, 120)
+                    && isNonEmptyString(request.resource.data.email, 254)
+                    && (!('phone' in request.resource.data)
+                        || request.resource.data.phone is string
+                        && request.resource.data.phone.size() <= 40)
+                    && isNonEmptyString(request.resource.data.message, 2000);
+      allow update, delete: if false;
+    }
+    match /koperasi_members/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---- default deny --------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

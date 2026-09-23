@@ -1,0 +1,23 @@
+{
+  "parameters": {
+    "rsvp_open": {
+      "defaultValue": { "value": "true" },
+      "description": "Whether the wedding RSVP form accepts new submissions.",
+      "valueType": "BOOLEAN"
+    },
+    "koperasi_contact_open": {
+      "defaultValue": { "value": "true" },
+      "description": "Whether the koperasi contact form accepts new submissions.",
+      "valueType": "BOOLEAN"
+    },
+    "maintenance_message": {
+      "defaultValue": { "value": "" },
+      "description": "Optional site-wide banner text; empty means no banner.",
+      "valueType": "STRING"
+    }
+  },
+  "parameterGroups": {},
+  "version": {
+    "description": "Workspace foundation defaults — edit live values in the Firebase Console."
+  }
+}
